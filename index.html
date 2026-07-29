@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0E0F11">
+  <title>Aktivasi License — Leveling Digital</title>
+  <script>
+    (function() {
+      try {
+        var saved = localStorage.getItem('ld-theme');
+        var sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', saved || sys);
+        var sb = localStorage.getItem('ld-sidebar-expanded');
+        if (sb === null || sb === '1') document.documentElement.classList.add('sb-pre');
+      } catch (e) {}
+    })();
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root, [data-theme="light"] {
+      --bg-app:        #F7F4EE;
+      --bg-surface:    #FFFFFF;
+      --bg-elevated:   #FFFFFF;
+      --bg-muted:      #F0EDE6;
+      --border-default: #E8E3D8;
+      --border-strong:  #C9C2B3;
+      --border-focus:   #EF4444;
+      --text-primary:    #1A1A1A;
+      --text-secondary:  #6B7280;
+      --text-tertiary:   #A8A29E;
+      --text-on-primary: #FFFFFF;
+      --text-on-success: #FFFFFF;
+      --brand-primary:       #EF4444;
+      --brand-primary-hover: #DC2626;
+      --brand-primary-press: #B91C1C;
+      --state-success: #16A34A;
+      --state-warning: #F59E0B;
+      --state-danger:  #DC2626;
+      --state-info:    #3B82F6;
+      --state-success-bg: rgba(22,163,74,0.10);
+      --state-warning-bg: rgba(245,158,11,0.10);
+      --state-danger-bg:  rgba(220,38,38,0.10);
+      --state-info-bg:    rgba(59,130,246,0.10);
+      --maya-purple:  #8B5CF6;
+      --reza-red:     #EF4444;
+      --dimas-orange: #F97316;
+      --sari-green:   #16A34A;
+      --bayu-blue:    #3B82F6;
+      --shadow-card:  0 1px 3px rgba(20,20,20,.04), 0 4px 16px rgba(20,20,20,.04);
+      --shadow-pop:   0 4px 14px rgba(239,68,68,.18);
+      --shadow-modal: 0 24px 48px rgba(20,20,20,.18);
+      --sidebar-bg:        #0A0A0A;
+      --sidebar-text:      rgba(255,255,255,0.72);
+      --sidebar-text-dim:  rgba(255,255,255,0.45);
+      --sidebar-divider:   rgba(255,255,255,0.06);
+    }
+    [data-theme="dark"] {
+      --bg-app:        #0E0F11;
+      --bg-surface:    #17191D;
+      --bg-elevated:   #1F2228;
+      --bg-muted:      #22252B;
+      --border-default: #2A2D33;
+      --border-strong:  #3A3D44;
+      --border-focus:   #FB7185;
+      --text-primary:    #ECEBE5;
+      --text-secondary:  #A1A4AC;
+      --text-tertiary:   #6F7480;
+      --text-on-primary: #0E0F11;
+      --text-on-success: #0E0F11;
+      --brand-primary:       #FB7185;
+      --brand-primary-hover: #F43F5E;
+      --brand-primary-press: #E11D48;
+      --state-success: #4ADE80;
+      --state-warning: #FBBF24;
+      --state-danger:  #F87171;
+      --state-info:    #60A5FA;
+      --state-success-bg: rgba(74,222,128,0.12);
+      --state-warning-bg: rgba(251,191,36,0.12);
+      --state-danger-bg:  rgba(248,113,113,0.12);
+      --state-info-bg:    rgba(96,165,250,0.12);
+      --maya-purple:  #A78BFA;
+      --reza-red:     #FB7185;
+      --dimas-orange: #FB923C;
+      --sari-green:   #4ADE80;
+      --bayu-blue:    #60A5FA;
+      --shadow-card:  0 1px 2px rgba(0,0,0,.6), 0 8px 24px rgba(0,0,0,.4);
+      --shadow-pop:   0 4px 14px rgba(251,113,133,.20);
+      --shadow-modal: 0 24px 48px rgba(0,0,0,.6);
+      --sidebar-bg:        #050607;
+      --sidebar-text:      rgba(255,255,255,0.78);
+      --sidebar-text-dim:  rgba(255,255,255,0.50);
+      --sidebar-divider:   rgba(255,255,255,0.08);
+    }
+    body { transition: background-color 200ms ease-out, color 200ms ease-out; }
+    .ld-themeable { transition: background-color 200ms ease-out, border-color 200ms ease-out, color 200ms ease-out; }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'app':         'var(--bg-app)',
+            'surface':     'var(--bg-surface)',
+            'elevated':    'var(--bg-elevated)',
+            'muted':       'var(--bg-muted)',
+            'border-d':    'var(--border-default)',
+            'border-s':    'var(--border-strong)',
+            'border-f':    'var(--border-focus)',
+            'ink':         'var(--text-primary)',
+            'ink-2':       'var(--text-secondary)',
+            'ink-3':       'var(--text-tertiary)',
+            'on-primary':  'var(--text-on-primary)',
+            'brand':       'var(--brand-primary)',
+            'brand-hover': 'var(--brand-primary-hover)',
+            'brand-press': 'var(--brand-primary-press)',
+            'success':     'var(--state-success)',
+            'warning':     'var(--state-warning)',
+            'danger':      'var(--state-danger)',
+            'info':        'var(--state-info)',
+            'success-bg':  'var(--state-success-bg)',
+            'warning-bg':  'var(--state-warning-bg)',
+            'danger-bg':   'var(--state-danger-bg)',
+            'info-bg':     'var(--state-info-bg)',
+            'maya':  'var(--maya-purple)',
+            'reza':  'var(--reza-red)',
+            'dimas': 'var(--dimas-orange)',
+            'sari':  'var(--sari-green)',
+            'bayu':  'var(--bayu-blue)',
+            'ld-black':    '#0A0A0A',
+            'ld-graphite': '#1F1F1F',
+            'ld-red':      'var(--brand-primary)',
+            'ld-red-deep': 'var(--brand-primary-hover)',
+            'ld-paper':    'var(--bg-app)',
+            'ld-card':     'var(--bg-surface)',
+            'ld-border':   'var(--border-default)',
+            'ld-ink':      'var(--text-primary)',
+            'ld-slate':    'var(--text-secondary)',
+            'ld-warm':     'var(--text-tertiary)',
+            'ld-off':      'var(--text-primary)',
+            'ld-green':    'var(--state-success)',
+            'ld-amber':    'var(--state-warning)',
+          },
+          fontFamily: {
+            display: ['Inter', 'system-ui', 'sans-serif'],
+            body:    ['Inter', 'system-ui', 'sans-serif'],
+            mono:    ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          },
+          fontSize: {
+            'display-xl': ['48px', { lineHeight: '56px', fontWeight: '900', letterSpacing: '-0.02em' }],
+            'display-lg': ['36px', { lineHeight: '44px', fontWeight: '800', letterSpacing: '-0.02em' }],
+            'display-md': ['28px', { lineHeight: '36px', fontWeight: '700', letterSpacing: '-0.01em' }],
+            'display-sm': ['22px', { lineHeight: '30px', fontWeight: '700' }],
+            'body-lg':    ['18px', { lineHeight: '28px', fontWeight: '500' }],
+            'body':       ['16px', { lineHeight: '24px', fontWeight: '400' }],
+            'body-sm':    ['14px', { lineHeight: '20px', fontWeight: '400' }],
+            'label':      ['12px', { lineHeight: '16px', fontWeight: '600', letterSpacing: '0.04em' }],
+            'mono':       ['14px', { lineHeight: '20px', fontWeight: '400' }],
+            'mono-sm':    ['12px', { lineHeight: '16px', fontWeight: '400' }],
+          },
+          boxShadow: {
+            'ld-card':       'var(--shadow-card)',
+            'ld-card-hover': 'var(--shadow-pop)',
+            'card':          'var(--shadow-card)',
+            'pop':           'var(--shadow-pop)',
+            'modal':         'var(--shadow-modal)',
+          },
+          borderRadius: {
+            'sm':  '6px',
+            'md':  '10px',
+            'lg':  '14px',
+            'xl':  '20px',
+            '2xl': '28px',
+          },
+          zIndex: {
+            'base':     '0',
+            'elevated': '10',
+            'sticky':   '30',
+            'overlay':  '40',
+            'modal-bg': '80',
+            'modal':    '90',
+            'toast':    '100',
+            'cmdk':     '110',
+          },
+          transitionDuration: {
+            'instant': '0ms',
+            'fast':    '100ms',
+            'base':    '200ms',
+            'slow':    '300ms',
+            'slower':  '400ms',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      font-feature-settings: "ss01", "cv11", "tnum";
+      background-color: var(--bg-app);
+      color: var(--text-primary);
+    }
+    .tnum { font-variant-numeric: tabular-nums; }
+    *:focus-visible {
+      outline: 2px solid var(--border-focus);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 8px;
+      background: var(--brand-primary);
+      color: var(--text-on-primary);
+      padding: 8px 16px;
+      border-radius: 6px;
+      z-index: 1000;
+      transition: top 200ms ease-out;
+    }
+    .skip-link:focus { top: 8px; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    /* Sidebar */
+    .ld-sidebar {
+      width: 5rem;
+      transition: width 250ms cubic-bezier(.16, 1, .3, 1);
+      overflow: hidden;
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+    }
+    .ld-sidebar.expanded { width: 14rem; }
+    .ld-sidebar.expanded .nav-label { opacity: 1; transform: translateX(0); }
+    .ld-sidebar.expanded .nav-pill { justify-content: flex-start; padding-left: 0.9rem; }
+    .ld-sidebar.expanded .ld-logo-text { opacity: 1; transform: translateX(0); }
+    .ld-sidebar.expanded .ld-toggle-icon { transform: rotate(180deg); }
+    .ld-sidebar.expanded .ld-toggle-label { opacity: 1; }
+    .ld-main { margin-left: 5rem; transition: margin-left 250ms cubic-bezier(.16, 1, .3, 1); }
+    body.sidebar-expanded .ld-main { margin-left: 14rem; }
+    html.sb-pre .ld-sidebar { width: 14rem; }
+    html.sb-pre .ld-main { margin-left: 14rem; }
+    html.sb-pre .ld-sidebar .nav-label,
+    html.sb-pre .ld-sidebar .ld-logo-text,
+    html.sb-pre .ld-sidebar .ld-toggle-label { display: inline; opacity: 1; transform: none; }
+    html.sb-pre .ld-sidebar .nav-pill { justify-content: flex-start; padding-left: 0.9rem; }
+    html.sb-pre .ld-sidebar .ld-toggle-btn { justify-content: flex-start; padding-left: 0.9rem; width: calc(100% - 1.25rem); }
+    html.sb-pre .ld-sidebar .nav-pill { width: calc(100% - 1.25rem); }
+    html.sb-pre .ld-sidebar .ld-logo-wrap { padding-left: 1.25rem; padding-right: 1.25rem; justify-content: flex-start; }
+    html.sb-pre .ld-sidebar .ld-toggle-icon { transform: rotate(180deg); }
+    .ld-logo-wrap { transition: padding 250ms; }
+    .ld-sidebar:not(.expanded) .ld-logo-wrap { padding-left: 0; padding-right: 0; justify-content: center; }
+    .ld-sidebar.expanded .ld-logo-wrap { padding-left: 1.25rem; padding-right: 1.25rem; justify-content: flex-start; }
+    .nav-pill {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 2.5rem;
+      margin: 0 0.625rem;
+      border-radius: 10px;
+      color: var(--sidebar-text);
+      gap: 0.75rem;
+      transition: background 150ms, color 150ms, padding 250ms;
+      white-space: nowrap;
+    }
+    .ld-sidebar:not(.expanded) .nav-pill {
+      width: 2.5rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .ld-sidebar.expanded .nav-pill { width: calc(100% - 1.25rem); }
+    .nav-pill:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .nav-pill.active { background: rgba(239,68,68,0.14); color: var(--brand-primary); }
+    .nav-pill.active i { color: var(--brand-primary); }
+    .nav-pill i { width: 1.1rem; text-align: center; flex-shrink: 0; font-size: 0.95rem; }
+    .nav-label {
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 200ms, transform 200ms;
+    }
+    .ld-logo-text {
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 200ms, transform 200ms;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .ld-sidebar:not(.expanded) .ld-logo-text,
+    .ld-sidebar:not(.expanded) .nav-label,
+    .ld-sidebar:not(.expanded) .ld-toggle-label { display: none; }
+    .ld-toggle-btn {
+      height: 2.5rem;
+      margin: 0 0.625rem;
+      background: transparent;
+      color: var(--sidebar-text-dim);
+      border: none;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.625rem;
+      cursor: pointer;
+      transition: background 150ms, color 150ms;
+      font-size: 13px;
+    }
+    .ld-sidebar:not(.expanded) .ld-toggle-btn {
+      width: 2.5rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .ld-sidebar.expanded .ld-toggle-btn {
+      width: calc(100% - 1.25rem);
+      justify-content: flex-start;
+      padding-left: 0.9rem;
+    }
+    .ld-toggle-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .ld-toggle-icon { display: inline-block; transition: transform 250ms; }
+    .ld-toggle-label {
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 200ms;
+    }
+    .ld-nav-divider {
+      height: 1px;
+      background: var(--sidebar-divider);
+      margin: 0.625rem 1rem;
+    }
+    .ld-sidebar:not(.expanded) .ld-nav-divider { margin: 0.625rem 1.25rem; }
+    .ld-sidebar::-webkit-scrollbar { width: 0; }
+
+    /* Page transitions */
+    .page-view { display: none; }
+    .page-view.active { display: block; animation: fadeIn 200ms ease-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Product cards */
+    .prod-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-card);
+      transition: box-shadow 200ms, transform 200ms;
+      cursor: pointer;
+    }
+    .prod-card:hover {
+      box-shadow: var(--shadow-pop);
+      transform: translateY(-2px);
+    }
+
+    /* Pulse animation for loading states */
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-pulse-slow { animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+  </style>
+</head>
+<body class="bg-app text-ink font-body min-h-screen">
+
+<a href="#main" class="skip-link">Lewati ke konten utama</a>
+
+<!-- Global Error Modal -->
+<div id="ld-error-modal" class="hidden fixed inset-0 z-toast bg-ink/70 backdrop-blur-sm flex items-center justify-center p-6"
+     role="alertdialog" aria-modal="true" aria-labelledby="ld-error-title">
+  <div class="bg-surface border-2 border-danger shadow-2xl rounded-2xl p-6 max-w-md w-full">
+    <div class="flex items-start gap-3 mb-4">
+      <span id="ld-error-icon" class="text-3xl shrink-0">&#9888;&#65039;</span>
+      <div class="flex-1 min-w-0">
+        <h2 id="ld-error-title" class="font-display text-xl font-black text-ink mb-1">Error</h2>
+        <p id="ld-error-message" class="text-sm text-ink-2 leading-relaxed"></p>
+        <p id="ld-error-code" class="text-[10px] text-ink-3 font-mono mt-2 opacity-50"></p>
+      </div>
+      <button type="button" id="ld-error-close-x" class="text-ink-2 hover:text-danger text-2xl leading-none -mt-1">&times;</button>
+    </div>
+    <div class="flex gap-2 pt-3 border-t border-border-d">
+      <button type="button" id="ld-error-action-btn"
+        class="hidden flex-1 bg-brand text-on-primary font-semibold py-2.5 rounded-lg hover:bg-brand-hover">
+        Action
+      </button>
+      <button type="button" id="ld-error-close-btn"
+        class="bg-paper border border-border-d text-ink px-5 py-2.5 rounded-lg hover:border-brand">
+        Tutup
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="flex min-h-screen relative">
+
+  <!-- Left Sidebar -->
+  <aside class="ld-sidebar fixed top-0 bottom-0 left-0 flex flex-col py-5 z-overlay" id="ld-sidebar" aria-label="Main navigation">
+    <a href="#" class="ld-logo-wrap mb-6 group flex items-center gap-3" aria-label="Home" onclick="navigateTo('home'); return false;">
+      <span class="w-10 h-10 bg-brand text-on-primary font-display font-black flex items-center justify-center rounded-xl text-sm tracking-tight shadow-lg group-hover:scale-105 transition-transform flex-shrink-0">LD</span>
+      <span class="ld-logo-text">Leveling Digital</span>
+    </a>
+
+    <nav class="flex flex-col gap-1 flex-1" role="navigation">
+      <a href="#" class="nav-pill active" data-page="home" onclick="navigateTo('home'); return false;">
+        <i class="fa-solid fa-house" aria-hidden="true"></i>
+        <span class="nav-label">Beranda</span>
+      </a>
+      <a href="#" class="nav-pill" data-page="products" onclick="navigateTo('products'); return false;">
+        <i class="fa-solid fa-cubes" aria-hidden="true"></i>
+        <span class="nav-label">Produk</span>
+      </a>
+      <a href="#" class="nav-pill" data-page="gallery" onclick="navigateTo('gallery'); return false;">
+        <i class="fa-solid fa-images" aria-hidden="true"></i>
+        <span class="nav-label">Galeri</span>
+      </a>
+      <a href="#" class="nav-pill" data-page="avatars" onclick="navigateTo('avatars'); return false;">
+        <i class="fa-solid fa-user-group" aria-hidden="true"></i>
+        <span class="nav-label">Avatar</span>
+      </a>
+      <a href="#" class="nav-pill" data-page="mentor" onclick="navigateTo('mentor'); return false;">
+        <i class="fa-solid fa-user-graduate" aria-hidden="true"></i>
+        <span class="nav-label">AI Mentor</span>
+      </a>
+      <a href="#" class="nav-pill" data-page="cost" onclick="navigateTo('cost'); return false;">
+        <i class="fa-solid fa-coins" aria-hidden="true"></i>
+        <span class="nav-label">Biaya</span>
+      </a>
+    </nav>
+
+    <a href="#" class="nav-pill mb-2" data-page="settings" onclick="navigateTo('settings'); return false;">
+      <i class="fa-solid fa-gear" aria-hidden="true"></i>
+      <span class="nav-label">Pengaturan</span>
+    </a>
+
+    <button type="button" class="ld-toggle-btn" id="ld-toggle"
+            title="Collapse / expand sidebar"
+            aria-label="Toggle sidebar"
+            aria-expanded="false">
+      <i class="fa-solid fa-angle-right ld-toggle-icon" aria-hidden="true"></i>
+      <span class="ld-toggle-label">Ciutkan</span>
+    </button>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="ld-main flex-1" id="main" tabindex="-1">
+    <div class="max-w-[1440px] mx-auto px-6 lg:px-10 py-8">
+
+      <!-- Home Page - Activation -->
+      <div class="page-view active" id="page-home">
+        <div class="max-w-md mx-auto py-8">
+          <div class="text-center mb-6">
+            <span class="inline-block w-14 h-14 bg-ld-red text-white font-display font-black rounded-2xl flex items-center justify-center text-base tracking-tight shadow-lg" style="line-height:56px;">LD</span>
+          </div>
+          <h1 class="font-display text-2xl font-black text-center mb-2 text-ld-ink">Aktivasi Leveling Digital</h1>
+          <p class="text-sm text-ld-slate text-center mb-6">
+            Masukin email + license key dari email aktivasi yang lu terima setelah purchase.
+          </p>
+
+          <div class="bg-ld-card border border-ld-border shadow-ld-card rounded-2xl p-6">
+            <form id="activate-form" class="space-y-4">
+              <div>
+                <label class="block text-xs uppercase tracking-wider text-ld-slate font-semibold mb-1.5">Email customer</label>
+                <input id="email" type="email" required value=""
+                       placeholder="[email protected]"
+                       class="w-full bg-ld-paper border border-ld-border rounded-lg px-3 py-2.5 text-sm focus:border-ld-red focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-xs uppercase tracking-wider text-ld-slate font-semibold mb-1.5">License Key</label>
+                <input id="license_key" type="text" required value=""
+                       placeholder="LD-XXXX-XXXX-XXXX-XXXX"
+                       class="w-full bg-ld-paper border border-ld-border rounded-lg px-3 py-2.5 text-sm font-mono uppercase focus:border-ld-red focus:outline-none"
+                       style="text-transform: uppercase;">
+                <p class="text-[11px] text-ld-slate mt-1">Format: LD-XXXX-XXXX-XXXX-XXXX (di email aktivasi lu).</p>
+              </div>
+
+              <button type="submit" id="submit-btn"
+                      class="w-full bg-ld-red text-white font-bold py-3 rounded-lg hover:bg-ld-red-deep flex items-center justify-center gap-2">
+                <i class="fa-solid fa-key"></i> Aktivasi Sekarang
+              </button>
+
+              <div id="status" class="text-sm text-center min-h-[20px]"></div>
+            </form>
+          </div>
+
+          <div class="bg-ld-paper border border-ld-border rounded-lg p-4 mt-4 text-xs text-ld-slate">
+            <div class="font-semibold text-ld-ink mb-1">&#x1F4CD; Device fingerprint:</div>
+            <div class="font-mono text-ld-warm break-all" id="device-fingerprint">web-<span id="fingerprint-id"></span></div>
+            <div class="text-[11px] mt-2">
+              Activation ngedaftarin device ini ke license lu (max 1 device). Mau pindah ke laptop lain? Hubungi admin.
+            </div>
+          </div>
+
+          <p class="text-xs text-ld-slate text-center mt-6">
+            Belum dapet license? <a href="https://levelingdigital.com" target="_blank" class="text-ld-red hover:underline">Order disini</a><br>
+            License server: <code class="text-ld-warm">https://license.levelingdigital.com</code>
+          </p>
+        </div>
+      </div>
+
+      <!-- Products Page -->
+      <div class="page-view" id="page-products">
+        <div class="mb-8">
+          <h1 class="font-display text-3xl font-black text-ink mb-2">Produk</h1>
+          <p class="text-ink-2 text-body-lg">Semua produk digital yang sudah kamu buat dengan Leveling Digital.</p>
+        </div>
+        <div class="flex items-center gap-4 mb-6">
+          <input type="text" id="product-search" placeholder="Cari produk..."
+                 class="flex-1 max-w-md bg-surface border border-border-d rounded-lg px-4 py-2.5 text-sm text-ink focus:border-brand focus:outline-none"
+                 oninput="filterProducts()">
+          <button onclick="navigateTo('home')" class="bg-brand text-on-primary font-semibold py-2.5 px-5 rounded-lg hover:bg-brand-hover flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Produk Baru
+          </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="products-grid">
+        </div>
+      </div>
+
+      <!-- Gallery Page -->
+      <div class="page-view" id="page-gallery">
+        <div class="mb-8">
+          <h1 class="font-display text-3xl font-black text-ink mb-2">Galeri</h1>
+          <p class="text-ink-2 text-body-lg">Koleksi visual dari semua produk yang sudah dibuat.</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="gallery-grid">
+        </div>
+      </div>
+
+      <!-- Avatars Page -->
+      <div class="page-view" id="page-avatars">
+        <div class="mb-8">
+          <h1 class="font-display text-3xl font-black text-ink mb-2">Avatar</h1>
+          <p class="text-ink-2 text-body-lg">AI Avatar team yang siap bantu bikin konten digital kamu.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4" id="avatars-grid">
+        </div>
+      </div>
+
+      <!-- AI Mentor Page -->
+      <div class="page-view" id="page-mentor">
+        <div class="mb-8">
+          <h1 class="font-display text-3xl font-black text-ink mb-2">AI Mentor</h1>
+          <p class="text-ink-2 text-body-lg">Belajar dan konsultasi dengan AI mentor untuk mengembangkan skill digital kamu.</p>
+        </div>
+        <div class="bg-surface border border-border-d shadow-card rounded-2xl p-8 text-center">
+          <i class="fa-solid fa-user-graduate text-6xl text-ink-3 mb-4"></i>
+          <h2 class="font-display text-display-sm text-ink mb-2">Segera Hadir</h2>
+          <p class="text-ink-2">Fitur AI Mentor sedang dalam pengembangan. Stay tuned!</p>
+        </div>
+      </div>
+
+      <!-- Cost Page -->
+      <div class="page-view" id="page-cost">
+        <div class="mb-8">
+          <h1 class="font-display text-3xl font-black text-ink mb-2">Biaya</h1>
+          <p class="text-ink-2 text-body-lg">Estimasi biaya penggunaan AI untuk setiap produk yang kamu buat.</p>
+        </div>
+        <div class="bg-surface border border-border-d shadow-card rounded-2xl p-6">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="border-b border-border-d">
+                  <th class="py-3 px-4 text-label text-ink-2">Agent</th>
+                  <th class="py-3 px-4 text-label text-ink-2">Task</th>
+                  <th class="py-3 px-4 text-label text-ink-2">Estimasi Biaya</th>
+                  <th class="py-3 px-4 text-label text-ink-2">Status</th>
+                </tr>
+              </thead>
+              <tbody class="text-body-sm">
+                <tr class="border-b border-border-d">
+                  <td class="py-3 px-4"><span class="text-maya font-semibold">Maya</span></td>
+                  <td class="py-3 px-4 text-ink-2">Research &amp; Analysis</td>
+                  <td class="py-3 px-4 font-mono text-ink">$0.50 - $2.00</td>
+                  <td class="py-3 px-4"><span class="inline-block px-2 py-0.5 rounded-full text-xs bg-success-bg text-success">Termasuk</span></td>
+                </tr>
+                <tr class="border-b border-border-d">
+                  <td class="py-3 px-4"><span class="text-reza font-semibold">Reza</span></td>
+                  <td class="py-3 px-4 text-ink-2">Copywriting</td>
+                  <td class="py-3 px-4 font-mono text-ink">$0.30 - $1.50</td>
+                  <td class="py-3 px-4"><span class="inline-block px-2 py-0.5 rounded-full text-xs bg-success-bg text-success">Termasuk</span></td>
+                </tr>
+                <tr class="border-b border-border-d">
+                  <td class="py-3 px-4"><span class="text-dimas font-semibold">Dimas</span></td>
+                  <td class="py-3 px-4 text-ink-2">Product Building</td>
+                  <td class="py-3 px-4 font-mono text-ink">$0.80 - $3.00</td>
+                  <td class="py-3 px-4"><span class="inline-block px-2 py-0.5 rounded-full text-xs bg-success-bg text-success">Termasuk</span></td>
+                </tr>
+                <tr class="border-b border-border-d">
+                  <td class="py-3 px-4"><span class="text-sari font-semibold">Sari</span></td>
+                  <td class="py-3 px-4 text-ink-2">Web Design</td>
+                  <td class="py-3 px-4 font-mono text-ink">$0.60 - $2.50</td>
+                  <td class="py-3 px-4"><span class="inline-block px-2 py-0.5 rounded-full text-xs bg-success-bg text-success">Termasuk</span></td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4"><span class="text-bayu font-semibold">Bayu</span></td>
+                  <td class="py-3 px-4 text-ink-2">Video Production</td>
+                  <td class="py-3 px-4 font-mono text-ink">$1.00 - $4.00</td>
+                  <td class="py-3 px-4"><span class="inline-block px-2 py-0.5 rounded-full text-xs bg-info-bg text-info">Beta</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Page -->
+      <div class="page-view" id="page-settings">
+        <div class="mb-8">
+          <h1 class="font-display text-3xl font-black text-ink mb-2">Pengaturan</h1>
+          <p class="text-ink-2 text-body-lg">Konfigurasi akun, API keys, dan preferensi aplikasi.</p>
+        </div>
+        <div class="max-w-2xl space-y-6">
+          <div class="bg-surface border border-border-d shadow-card rounded-2xl p-6">
+            <h2 class="font-display text-display-sm text-ink mb-1">Tampilan</h2>
+            <p class="text-ink-2 text-body-sm mb-4">Pilih tema tampilan aplikasi.</p>
+            <div class="flex gap-3">
+              <button onclick="setTheme('light')" id="btn-theme-light"
+                      class="flex-1 border-2 border-border-d rounded-xl p-4 hover:border-brand transition-colors text-center">
+                <i class="fa-solid fa-sun text-3xl text-warning mb-2 block"></i>
+                <span class="text-body-sm font-semibold text-ink">Light</span>
+              </button>
+              <button onclick="setTheme('dark')" id="btn-theme-dark"
+                      class="flex-1 border-2 border-border-d rounded-xl p-4 hover:border-brand transition-colors text-center">
+                <i class="fa-solid fa-moon text-3xl text-info mb-2 block"></i>
+                <span class="text-body-sm font-semibold text-ink">Dark</span>
+              </button>
+              <button onclick="setTheme('system')" id="btn-theme-system"
+                      class="flex-1 border-2 border-border-d rounded-xl p-4 hover:border-brand transition-colors text-center">
+                <i class="fa-solid fa-display text-3xl text-ink-2 mb-2 block"></i>
+                <span class="text-body-sm font-semibold text-ink">System</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-surface border border-border-d shadow-card rounded-2xl p-6">
+            <h2 class="font-display text-display-sm text-ink mb-1">API Configuration</h2>
+            <p class="text-ink-2 text-body-sm mb-4">Kelola API keys untuk integrasi dengan layanan eksternal.</p>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs uppercase tracking-wider text-ink-2 font-semibold mb-1.5">OpenAI API Key</label>
+                <input type="password" value="sk-••••••••••••••••••••••••••••••"
+                       class="w-full bg-muted border border-border-d rounded-lg px-3 py-2.5 text-sm font-mono focus:border-brand focus:outline-none" readonly>
+              </div>
+              <div>
+                <label class="block text-xs uppercase tracking-wider text-ink-2 font-semibold mb-1.5">License Key</label>
+                <input type="text" value="LD-ACTIVE-LICENSE-KEY-HERE"
+                       class="w-full bg-muted border border-border-d rounded-lg px-3 py-2.5 text-sm font-mono focus:border-brand focus:outline-none" readonly>
+              </div>
+              <button class="bg-brand text-on-primary font-semibold py-2.5 px-5 rounded-lg hover:bg-brand-hover mt-2">
+                Simpan Perubahan
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container" class="fixed bottom-6 right-6 z-toast space-y-2 pointer-events-none"
+     role="status" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Cmd+K Command Palette -->
+<div id="cmdk-overlay" class="hidden fixed inset-0 z-cmdk bg-ink/60 backdrop-blur-sm" aria-hidden="true">
+  <div class="max-w-[600px] mx-auto mt-20 bg-elevated border border-border-d rounded-xl shadow-modal overflow-hidden"
+       role="dialog" aria-modal="true" aria-label="Command palette">
+    <div class="flex items-center gap-3 px-4 py-3 border-b border-border-d">
+      <i class="fa-solid fa-magnifying-glass text-ink-3" aria-hidden="true"></i>
+      <input id="cmdk-input" type="text" placeholder="Cari produk atau perintah..."
+             class="flex-1 bg-transparent text-ink placeholder-ink-3 outline-none text-body-lg"
+             autocomplete="off">
+      <span class="text-mono-sm text-ink-3 px-1.5 py-0.5 border border-border-d rounded">esc</span>
+    </div>
+    <div id="cmdk-results" class="max-h-[400px] overflow-y-auto py-2"></div>
+    <div class="px-4 py-2 border-t border-border-d bg-muted text-mono-sm text-ink-3 flex items-center gap-3">
+      <span><kbd class="px-1 py-0.5 bg-surface border border-border-d rounded text-[10px]">&uarr;&darr;</kbd> navigate</span>
+      <span><kbd class="px-1 py-0.5 bg-surface border border-border-d rounded text-[10px]">&crarr;</kbd> select</span>
+      <span class="ml-auto"><kbd class="px-1 py-0.5 bg-surface border border-border-d rounded text-[10px]">&#x2318;\</kbd> theme</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── Sidebar toggle ───
+  (function() {
+    const sidebar = document.getElementById('ld-sidebar');
+    const toggle  = document.getElementById('ld-toggle');
+    const label   = toggle?.querySelector('.ld-toggle-label');
+    const KEY = 'ld-sidebar-expanded';
+
+    function applyState(expanded) {
+      sidebar.classList.toggle('expanded', expanded);
+      document.body.classList.toggle('sidebar-expanded', expanded);
+      if (toggle) {
+        toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        toggle.title = expanded ? 'Collapse sidebar' : 'Expand sidebar';
+      }
+      if (label) label.textContent = expanded ? 'Ciutkan' : '';
+    }
+
+    let initial = true;
+    try { const v = localStorage.getItem(KEY); initial = (v === null) ? true : (v === '1'); } catch (e) {}
+    applyState(initial);
+    document.documentElement.classList.remove('sb-pre');
+
+    toggle?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const next = !sidebar.classList.contains('expanded');
+      applyState(next);
+      try { localStorage.setItem(KEY, next ? '1' : '0'); } catch (e) {}
+    });
+  })();
+
+  // ─── Theme toggle ───
+  function setTheme(theme) {
+    if (theme === 'system') {
+      const sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', sys);
+      localStorage.removeItem('ld-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+      try { localStorage.setItem('ld-theme', theme); } catch (e) {}
+    }
+    highlightThemeButtons();
+  }
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  }
+  function highlightThemeButtons() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const stored = localStorage.getItem('ld-theme');
+    const active = stored || 'system';
+    ['light', 'dark', 'system'].forEach(t => {
+      const btn = document.getElementById('btn-theme-' + t);
+      if (btn) {
+        const isActive = stored ? (t === stored) : (t === 'system');
+        btn.classList.toggle('border-brand', isActive);
+        btn.classList.toggle('border-border-d', !isActive);
+        btn.classList.toggle('bg-brand/5', isActive);
+      }
+    });
+  }
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
+      e.preventDefault();
+      toggleTheme();
+    }
+  });
+
+  // ─── Page Navigation ───
+  const pages = {
+    home: { title: 'Aktivasi License' },
+    products: { title: 'Produk' },
+    gallery: { title: 'Galeri' },
+    avatars: { title: 'Avatar' },
+    mentor: { title: 'AI Mentor' },
+    cost: { title: 'Biaya' },
+    settings: { title: 'Pengaturan' },
+  };
+
+  function navigateTo(pageId) {
+    document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-pill').forEach(v => v.classList.remove('active'));
+
+    const pageEl = document.getElementById('page-' + pageId);
+    if (pageEl) pageEl.classList.add('active');
+
+    const navItems = document.querySelectorAll('.nav-pill[data-page="' + pageId + '"]');
+    navItems.forEach(v => v.classList.add('active'));
+
+    const page = pages[pageId];
+    document.title = (page ? page.title + ' — Leveling Digital' : 'Leveling Digital');
+
+    if (pageId === 'products') renderProducts();
+    if (pageId === 'gallery') renderGallery();
+    if (pageId === 'avatars') renderAvatars();
+    if (pageId === 'settings') highlightThemeButtons();
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ─── Products data ───
+  const mockProducts = [
+    { slug: 'ebook-marketing-digital', name: 'Ebook Marketing Digital 2024', status: 'published', agent: 'Maya', date: '2024-01-15', color: 'maya' },
+    { slug: 'kursus-online-seo', name: 'Kursus Online SEO Mastery', status: 'draft', agent: 'Dimas', date: '2024-02-20', color: 'dimas' },
+    { slug: 'template-landing-page', name: 'Template Landing Page Pro', status: 'published', agent: 'Sari', date: '2024-03-10', color: 'sari' },
+    { slug: 'video-tutorial-ads', name: 'Video Tutorial FB Ads', status: 'processing', agent: 'Bayu', date: '2024-03-25', color: 'bayu' },
+    { slug: 'copywriting-swipe-file', name: 'Copywriting Swipe File Bundle', status: 'published', agent: 'Reza', date: '2024-04-05', color: 'reza' },
+    { slug: 'research-niche-report', name: 'Research: Niche Market Report', status: 'published', agent: 'Maya', date: '2024-04-18', color: 'maya' },
+  ];
+
+  function renderProducts(filter) {
+    const grid = document.getElementById('products-grid');
+    if (!grid) return;
+    let items = mockProducts;
+    if (filter) {
+      const q = filter.toLowerCase();
+      items = items.filter(p => p.name.toLowerCase().includes(q));
+    }
+    grid.innerHTML = items.map(p => `
+      <div class="prod-card" onclick="showToast('Membuka ${p.name}...', 'info')">
+        <div class="flex items-start justify-between mb-3">
+          <span class="text-${p.color} font-semibold text-sm">${p.agent}</span>
+          <span class="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${p.status === 'published' ? 'bg-success-bg text-success' : p.status === 'draft' ? 'bg-warning-bg text-warning' : 'bg-info-bg text-info'}">${p.status}</span>
+        </div>
+        <h3 class="font-semibold text-ink mb-1">${p.name}</h3>
+        <p class="text-mono-sm text-ink-3">/${p.slug}</p>
+        <p class="text-mono-sm text-ink-3 mt-2">${new Date(p.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      </div>
+    `).join('');
+  }
+
+  function filterProducts() {
+    const q = document.getElementById('product-search')?.value;
+    renderProducts(q);
+  }
+
+  // ─── Gallery data ───
+  function renderGallery() {
+    const grid = document.getElementById('gallery-grid');
+    if (!grid) return;
+    const colors = ['#8B5CF6', '#EF4444', '#F97316', '#16A34A', '#3B82F6', '#EC4899', '#06B6D4', '#F59E0B'];
+    grid.innerHTML = colors.map((c, i) => `
+      <div class="bg-surface border border-border-d rounded-xl overflow-hidden shadow-card hover:shadow-pop transition-all cursor-pointer group" onclick="showToast('Membuka gambar ${i + 1}...', 'info')">
+        <div class="aspect-video flex items-center justify-center" style="background: linear-gradient(135deg, ${c}, ${c}88)">
+          <i class="fa-solid fa-image text-white text-3xl opacity-50 group-hover:scale-110 transition-transform"></i>
+        </div>
+        <div class="p-3">
+          <p class="text-body-sm font-semibold text-ink">Galeri #${String(i + 1).padStart(2, '0')}</p>
+          <p class="text-mono-sm text-ink-3">Produk digital</p>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ─── Avatars data ───
+  function renderAvatars() {
+    const grid = document.getElementById('avatars-grid');
+    if (!grid) return;
+    const avatars = [
+      { name: 'Maya', role: 'Research Analyst', icon: 'fa-magnifying-glass-chart', color: '#8B5CF6', status: 'active' },
+      { name: 'Reza', role: 'Copywriter', icon: 'fa-pen-fancy', color: '#EF4444', status: 'active' },
+      { name: 'Dimas', role: 'Product Builder', icon: 'fa-book', color: '#F97316', status: 'active' },
+      { name: 'Sari', role: 'Web Designer', icon: 'fa-display', color: '#16A34A', status: 'active' },
+      { name: 'Bayu', role: 'Video Producer', icon: 'fa-clapperboard', color: '#3B82F6', status: 'beta' },
+    ];
+    grid.innerHTML = avatars.map(a => `
+      <div class="prod-card text-center">
+        <div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3 shadow-lg" style="background: ${a.color}">
+          <i class="fa-solid ${a.icon} text-white text-xl"></i>
+        </div>
+        <h3 class="font-semibold text-ink text-body-lg">${a.name}</h3>
+        <p class="text-ink-2 text-body-sm">${a.role}</p>
+        <span class="inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-semibold ${a.status === 'active' ? 'bg-success-bg text-success' : 'bg-info-bg text-info'} uppercase">${a.status}</span>
+      </div>
+    `).join('');
+  }
+
+  // ─── Cmd+K command palette ───
+  (function() {
+    const overlay = document.getElementById('cmdk-overlay');
+    const input = document.getElementById('cmdk-input');
+    const results = document.getElementById('cmdk-results');
+    if (!overlay || !input || !results) return;
+
+    const STATIC_ITEMS = [
+      { kind: 'action', label: '+ New product', hint: 'Start research', icon: 'fa-plus', action: () => { close(); navigateTo('products'); } },
+      { kind: 'action', label: 'Home', hint: 'Dashboard', icon: 'fa-house', action: () => { close(); navigateTo('home'); } },
+      { kind: 'action', label: 'All products', hint: 'Products list', icon: 'fa-cubes', action: () => { close(); navigateTo('products'); } },
+      { kind: 'action', label: 'Library', hint: 'Visual gallery', icon: 'fa-images', action: () => { close(); navigateTo('gallery'); } },
+      { kind: 'action', label: 'Avatars', hint: 'AI team', icon: 'fa-user-group', action: () => { close(); navigateTo('avatars'); } },
+      { kind: 'action', label: 'Cost', hint: 'Usage costs', icon: 'fa-coins', action: () => { close(); navigateTo('cost'); } },
+      { kind: 'action', label: 'Settings', hint: 'API keys + preferences', icon: 'fa-gear', action: () => { close(); navigateTo('settings'); } },
+      { kind: 'action', label: 'AI Mentor', hint: 'Learn with AI', icon: 'fa-user-graduate', action: () => { close(); navigateTo('mentor'); } },
+      { kind: 'theme', label: 'Toggle theme', hint: 'Light / Dark', icon: 'fa-circle-half-stroke', kbd: '&#x2318;\\', action: () => { close(); toggleTheme(); } },
+      { kind: 'emp', label: 'Maya - Research Analyst', hint: 'Run research', icon: 'fa-magnifying-glass-chart', color: '#8B5CF6' },
+      { kind: 'emp', label: 'Reza - Copywriter', hint: 'Run Agent 02', icon: 'fa-pen-fancy', color: '#EF4444' },
+      { kind: 'emp', label: 'Dimas - Product Builder', hint: 'Run Agent 03', icon: 'fa-book', color: '#F97316' },
+      { kind: 'emp', label: 'Sari - Web Designer', hint: 'Run Agent 04', icon: 'fa-display', color: '#16A34A' },
+      { kind: 'emp', label: 'Bayu - Video Producer', hint: 'Run Agent 05', icon: 'fa-clapperboard', color: '#3B82F6' },
+    ];
+
+    const productItems = mockProducts.map(p => ({
+      kind: 'product',
+      label: p.name,
+      hint: p.agent + ' - ' + p.status,
+      icon: 'fa-folder',
+      color: p.color === 'maya' ? '#8B5CF6' : p.color === 'reza' ? '#EF4444' : p.color === 'dimas' ? '#F97316' : p.color === 'sari' ? '#16A34A' : '#3B82F6',
+    }));
+
+    const allItems = [...STATIC_ITEMS, ...productItems];
+    let activeIdx = 0;
+
+    function fuzzy(items, query) {
+      if (!query.trim()) return items;
+      const q = query.toLowerCase();
+      return items
+        .map(it => {
+          const hay = (it.label + ' ' + (it.hint || '')).toLowerCase();
+          let score = 0;
+          if (hay.startsWith(q)) score = 100;
+          else if (hay.includes(q)) score = 50;
+          else { let qi = 0; for (const ch of hay) { if (ch === q[qi]) qi++; } if (qi === q.length) score = 25; }
+          return [score, it];
+        })
+        .filter(([s]) => s > 0)
+        .sort((a, b) => b[0] - a[0])
+        .map(([, it]) => it);
+    }
+
+    function groupByKind(items) {
+      const groups = { product: [], emp: [], action: [], theme: [] };
+      for (const it of items) (groups[it.kind] = groups[it.kind] || []).push(it);
+      return groups;
+    }
+
+    function render(q) {
+      const filtered = fuzzy(allItems, q);
+      activeIdx = 0;
+      if (filtered.length === 0) {
+        results.innerHTML = '<div class="px-4 py-8 text-center text-ink-2 text-body-sm">No results for "' + q + '"</div>';
+        return;
+      }
+      const groups = groupByKind(filtered);
+      const headers = { product: 'PRODUCTS', emp: 'EMPLOYEES', action: 'ACTIONS', theme: 'THEME' };
+      let html = '';
+      let globalIdx = 0;
+      for (const kind of ['product', 'emp', 'action', 'theme']) {
+        const group = groups[kind] || [];
+        if (group.length === 0) continue;
+        html += '<div class="px-4 py-1 text-mono-sm text-ink-3 uppercase tracking-widest font-semibold">' + headers[kind] + '</div>';
+        for (const it of group) {
+          html += '<div class="cmdk-item flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-muted ' +
+            (globalIdx === 0 ? 'bg-muted' : '') + '" data-idx="' + globalIdx + '">' +
+            '<i class="fa-solid ' + it.icon + ' text-ink-2 w-4"' + (it.color ? ' style="color: ' + it.color + '"' : '') + '></i>' +
+            '<div class="flex-1 min-w-0">' +
+              '<div class="text-body-sm text-ink truncate">' + it.label + '</div>' +
+              (it.hint ? '<div class="text-mono-sm text-ink-3 truncate">' + it.hint + '</div>' : '') +
+            '</div>' +
+            (it.kbd ? '<kbd class="px-1.5 py-0.5 bg-surface border border-border-d rounded text-[10px] font-mono">' + it.kbd + '</kbd>' : '') +
+            '</div>';
+          globalIdx++;
+        }
+      }
+      results.innerHTML = html;
+    }
+
+    function open() {
+      overlay.classList.remove('hidden');
+      overlay.setAttribute('aria-hidden', 'false');
+      input.value = '';
+      input.focus();
+      render('');
+    }
+    function close() {
+      overlay.classList.add('hidden');
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+    function selectActive() {
+      const items = results.querySelectorAll('.cmdk-item');
+      const item = items[activeIdx];
+      if (!item) return;
+      const label = item.querySelector('.text-ink')?.textContent;
+      const actionItem = allItems.find(it => it.label === label);
+      if (actionItem?.action) { actionItem.action(); return; }
+      close();
+      showToast('Navigating to: ' + label, 'info');
+    }
+    function setActive(idx) {
+      const items = results.querySelectorAll('.cmdk-item');
+      if (items.length === 0) return;
+      activeIdx = Math.max(0, Math.min(idx, items.length - 1));
+      items.forEach((it, i) => it.classList.toggle('bg-muted', i === activeIdx));
+      items[activeIdx]?.scrollIntoView({ block: 'nearest' });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        if (overlay.classList.contains('hidden')) open(); else close();
+        return;
+      }
+      if (overlay.classList.contains('hidden')) return;
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key === 'ArrowDown') { e.preventDefault(); setActive(activeIdx + 1); return; }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); setActive(activeIdx - 1); return; }
+      if (e.key === 'Enter')     { e.preventDefault(); selectActive(); return; }
+    });
+    input.addEventListener('input', (e) => render(e.target.value));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    results.addEventListener('click', (e) => {
+      const item = e.target.closest('.cmdk-item');
+      if (!item) return;
+      activeIdx = parseInt(item.dataset.idx, 10) || 0;
+      selectActive();
+    });
+  })();
+
+  // ─── Global Error Modal ───
+  (function() {
+    const modal = document.getElementById('ld-error-modal');
+    const titleEl = document.getElementById('ld-error-title');
+    const msgEl = document.getElementById('ld-error-message');
+    const codeEl = document.getElementById('ld-error-code');
+    const iconEl = document.getElementById('ld-error-icon');
+    const actionBtn = document.getElementById('ld-error-action-btn');
+    const closeX = document.getElementById('ld-error-close-x');
+    const closeBtn = document.getElementById('ld-error-close-btn');
+    if (!modal) return;
+
+    function close() { modal.classList.add('hidden'); }
+    closeX.addEventListener('click', close);
+    closeBtn.addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+    window.showError = function(err) {
+      if (typeof err === 'string') err = { title: 'Error', message: err, level: 'error' };
+      const level = err.level || 'error';
+      iconEl.textContent = level === 'error' ? '❌' : level === 'warning' ? '⚠️' : 'ℹ️';
+      titleEl.textContent = err.title || 'Error';
+      msgEl.textContent = err.message || 'Terjadi kesalahan tidak terduga.';
+      codeEl.textContent = err.error_code ? '[' + err.error_code + ']' : '';
+      actionBtn.classList.add('hidden');
+      modal.classList.remove('hidden');
+    };
+  })();
+
+  // ─── Toast helper ───
+  function showToast(msg, kind) {
+    const c = document.getElementById('toast-container');
+    if (!c) return;
+    const t = document.createElement('div');
+    const cls = {
+      'success': 'bg-success text-on-primary',
+      'error':   'bg-danger text-on-primary',
+      'warning': 'bg-warning text-on-primary',
+      'info':    'bg-info text-on-primary',
+    }[kind] || 'bg-ink text-on-primary';
+    t.className = 'pointer-events-auto ' + cls + ' text-sm px-4 py-2 rounded-md shadow-modal';
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 200ms'; }, 3000);
+    setTimeout(() => t.remove(), 3300);
+  }
+
+  // ─── Activation form ───
+  (function() {
+    const form = document.getElementById('activate-form');
+    if (!form) return;
+    const status = document.getElementById('status');
+    const btn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const license_key = document.getElementById('license_key').value.trim().toUpperCase();
+      const email = document.getElementById('email').value.trim();
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+      status.innerHTML = '<span class="text-ld-amber">&#x23F3; Hubungin license server...</span>';
+
+      setTimeout(() => {
+        const validFormat = /^LD-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(license_key);
+        if (!validFormat) {
+          status.innerHTML = '<span class="text-ld-red">&#x26A0; Format license key salah. Gunakan format: LD-XXXX-XXXX-XXXX-XXXX</span>';
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-key"></i> Coba Lagi';
+          return;
+        }
+        if (!email.includes('@')) {
+          status.innerHTML = '<span class="text-ld-red">&#x26A0; Email tidak valid.</span>';
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-key"></i> Coba Lagi';
+          return;
+        }
+
+        status.innerHTML = '<span class="text-ld-green">&#x2705; Aktivasi berhasil! Welcome ' + email + '. Redirecting...</span>';
+        showToast('License activated successfully!', 'success');
+        setTimeout(() => { navigateTo('products'); }, 1200);
+      }, 1500);
+    });
+  })();
+
+  // ─── Device fingerprint ───
+  (function() {
+    const fpId = document.getElementById('fingerprint-id');
+    if (fpId) {
+      const hash = 'xxxxxxxxxxxxxxxx'.replace(/x/g, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]);
+      fpId.textContent = hash;
+    }
+  })();
+
+  // ─── Active run banner simulation ───
+  (function() {
+    const banner = document.createElement('div');
+    banner.id = 'ld-active-run-banner';
+    banner.className = 'fixed top-3 left-1/2 -translate-x-1/2 z-toast items-center gap-2 hidden';
+    banner.setAttribute('role', 'status');
+    banner.setAttribute('aria-live', 'polite');
+    banner.innerHTML = `
+      <div class="bg-warning text-on-primary text-body-sm font-semibold px-4 py-2 rounded-l-full shadow-modal flex items-center gap-2 border border-warning border-r-0">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <span>Pipeline running...</span>
+      </div>
+      <button type="button" class="bg-danger text-on-primary text-body-sm font-semibold px-3 py-2 rounded-r-full shadow-modal flex items-center gap-1.5 hover:bg-opacity-90 border border-danger" onclick="showToast('Task stopped', 'warning')">
+        <i class="fa-solid fa-stop"></i>
+        <span>Stop</span>
+      </button>
+    `;
+    document.body.appendChild(banner);
+  })();
+</script>
+
+</body>
+</html>
