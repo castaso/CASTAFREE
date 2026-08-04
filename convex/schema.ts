@@ -38,4 +38,14 @@ export default defineSchema({
   })
     .index("by_chat", ["chatId", "createdAt"])
     .index("by_user", ["userId"]),
+  usage: defineTable({
+    userId: v.id("users"),
+    source: v.string(),
+    model: v.string(),
+    promptTokens: v.number(),
+    completionTokens: v.number(),
+    totalTokens: v.number(),
+    cost: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId", "createdAt"]),
 });

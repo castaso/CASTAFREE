@@ -13,6 +13,7 @@ import type * as licenses from "../licenses.js";
 import type * as mentor from "../mentor.js";
 import type * as mentorAI from "../mentorAI.js";
 import type * as products from "../products.js";
+import type * as usage from "../usage.js";
 import type * as users from "../users.js";
 
 import type {
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   mentor: typeof mentor;
   mentorAI: typeof mentorAI;
   products: typeof products;
+  usage: typeof usage;
   users: typeof users;
 }>;
 

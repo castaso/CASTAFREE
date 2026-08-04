@@ -8,6 +8,26 @@ import { internal } from "./_generated/api";
 
 const MODEL = "gpt-4o-mini";
 
+// OpenAI pricing in USD per 1M tokens (gpt-4o-mini standard rates).
+const PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
+  "gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
+};
+
+function estimateCost(
+  model: string,
+  usage: {
+    prompt_tokens?: number | null;
+    completion_tokens?: number | null;
+  }
+): number {
+  const p = PRICING[model] ?? { inputPer1M: 0, outputPer1M: 0 };
+  return (
+    ((usage.prompt_tokens ?? 0) * p.inputPer1M +
+      (usage.completion_tokens ?? 0) * p.outputPer1M) /
+    1_000_000
+  );
+}
+
 const SYSTEM_PROMPT = `Kamu adalah "AI Mentor" dari Leveling Digital — mentor AI yang ramah, santai tapi tetap profesional, dan selalu jawab dalam Bahasa Indonesia (gaul-nya dikit, kayak temen yang ngerti banget).
 
 KONTEKS PRODUK:
@@ -97,6 +117,21 @@ export const askMentor = action({
         completion.choices[0]?.message?.content?.trim() ||
         "Maaf, aku lagi blank. Coba tanya ulang ya 😅";
       ok = true;
+
+      // Record real usage/cost for the Biaya page.
+      const usage = completion.usage;
+      if (usage) {
+        await ctx.runMutation(internal.usage.insertUsage, {
+          userId,
+          source: "AI Mentor",
+          model: MODEL,
+          promptTokens: usage.prompt_tokens ?? 0,
+          completionTokens: usage.completion_tokens ?? 0,
+          totalTokens: usage.total_tokens ?? 0,
+          cost: estimateCost(MODEL, usage),
+          createdAt: Date.now(),
+        });
+      }
     } catch (err) {
       console.error("OpenAI error:", err);
       content =
