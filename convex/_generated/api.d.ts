@@ -9,9 +9,12 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as gallery from "../gallery.js";
 import type * as licenses from "../licenses.js";
 import type * as mentor from "../mentor.js";
 import type * as mentorAI from "../mentorAI.js";
+import type * as pipelineAI from "../pipelineAI.js";
+import type * as pipelineData from "../pipelineData.js";
 import type * as products from "../products.js";
 import type * as usage from "../usage.js";
 import type * as users from "../users.js";
@@ -24,9 +27,12 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  gallery: typeof gallery;
   licenses: typeof licenses;
   mentor: typeof mentor;
   mentorAI: typeof mentorAI;
+  pipelineAI: typeof pipelineAI;
+  pipelineData: typeof pipelineData;
   products: typeof products;
   usage: typeof usage;
   users: typeof users;

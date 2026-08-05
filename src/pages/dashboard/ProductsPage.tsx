@@ -75,7 +75,7 @@ export function ProductsPage() {
     }
   }
 
-  const filtered = (products ?? []).filter((p) =>
+  const filtered = (products ?? []).filter((p: Product) =>
     p.name.toLowerCase().includes(query.toLowerCase())
   );
 

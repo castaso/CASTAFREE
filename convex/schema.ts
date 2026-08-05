@@ -48,4 +48,47 @@ export default defineSchema({
     cost: v.number(),
     createdAt: v.number(),
   }).index("by_user", ["userId", "createdAt"]),
+  pipelineRuns: defineTable({
+    userId: v.id("users"),
+    topic: v.string(),
+    status: v.union(
+      v.literal("running"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }).index("by_user", ["userId", "createdAt"]),
+  pipelineTasks: defineTable({
+    runId: v.id("pipelineRuns"),
+    userId: v.id("users"),
+    agentId: v.string(),
+    agentName: v.string(),
+    step: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("running"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    input: v.string(),
+    output: v.optional(v.string()),
+    model: v.string(),
+    promptTokens: v.optional(v.number()),
+    completionTokens: v.optional(v.number()),
+    cost: v.optional(v.number()),
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_run", ["runId", "step"])
+    .index("by_user", ["userId"]),
+  gallery: defineTable({
+    userId: v.id("users"),
+    storageId: v.id("_storage"),
+    name: v.string(),
+    mimeType: v.string(),
+    size: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId", "createdAt"]),
 });

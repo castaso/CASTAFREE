@@ -11,6 +11,7 @@ import {
   Images,
   LogOut,
   Settings,
+  Sparkles,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,7 @@ import { ProductsPage } from "@/pages/dashboard/ProductsPage";
 import { GalleryPage } from "@/pages/dashboard/GalleryPage";
 import { AvatarsPage } from "@/pages/dashboard/AvatarsPage";
 import { MentorPage } from "@/pages/dashboard/MentorPage";
+import { PipelinePage } from "@/pages/dashboard/PipelinePage";
 import { CostPage } from "@/pages/dashboard/CostPage";
 import { SettingsPage } from "@/pages/dashboard/SettingsPage";
 
@@ -28,6 +30,7 @@ const NAV_ITEMS = [
   { to: "/dashboard/gallery", label: "Galeri", icon: Images },
   { to: "/dashboard/avatars", label: "Avatar", icon: Users },
   { to: "/dashboard/mentor", label: "AI Mentor", icon: GraduationCap },
+  { to: "/dashboard/pipeline", label: "Pipeline", icon: Sparkles },
   { to: "/dashboard/cost", label: "Biaya", icon: Coins },
   { to: "/dashboard/settings", label: "Pengaturan", icon: Settings },
 ];
@@ -153,6 +156,7 @@ export function DashboardPage() {
             <Route path="gallery" element={<GalleryPage />} />
             <Route path="avatars" element={<AvatarsPage />} />
             <Route path="mentor" element={<MentorPage />} />
+            <Route path="pipeline" element={<PipelinePage />} />
             <Route path="cost" element={<CostPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

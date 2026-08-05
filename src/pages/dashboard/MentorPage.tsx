@@ -32,7 +32,7 @@ export function MentorPage() {
   const [pending, setPending] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
 
-  const activeChat = chats?.find((c) => c._id === activeChatId) ?? null;
+  const activeChat = chats?.find((c: Chat) => c._id === activeChatId) ?? null;
   const messages = useQuery(
     api.mentor.listMessages,
     activeChatId ? { chatId: activeChatId } : "skip"
