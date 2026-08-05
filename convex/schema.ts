@@ -56,6 +56,8 @@ export default defineSchema({
       v.literal("completed"),
       v.literal("failed")
     ),
+    imagesSaved: v.optional(v.number()),
+    imagesFailed: v.optional(v.number()),
     createdAt: v.number(),
     completedAt: v.optional(v.number()),
   }).index("by_user", ["userId", "createdAt"]),

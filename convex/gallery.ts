@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 
 export const list = query({
   args: {},
@@ -36,6 +36,28 @@ export const save = mutation({
     if (userId === null) throw new Error("Not authenticated");
     return await ctx.db.insert("gallery", {
       userId,
+      storageId: args.storageId,
+      name: args.name,
+      mimeType: args.mimeType,
+      size: args.size,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+// Internal insert used by actions (e.g. the AI pipeline) that already hold
+// a storageId from ctx.storage.store() and an authenticated userId.
+export const saveInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    storageId: v.id("_storage"),
+    name: v.string(),
+    mimeType: v.string(),
+    size: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("gallery", {
+      userId: args.userId,
       storageId: args.storageId,
       name: args.name,
       mimeType: args.mimeType,

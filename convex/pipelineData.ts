@@ -21,9 +21,19 @@ export const createRun = internalMutation({
 });
 
 export const completeRun = internalMutation({
-  args: { runId: v.id("pipelineRuns"), completedAt: v.number() },
-  handler: async (ctx, { runId, completedAt }) => {
-    await ctx.db.patch(runId, { status: "completed", completedAt });
+  args: {
+    runId: v.id("pipelineRuns"),
+    completedAt: v.number(),
+    imagesSaved: v.optional(v.number()),
+    imagesFailed: v.optional(v.number()),
+  },
+  handler: async (ctx, { runId, completedAt, imagesSaved, imagesFailed }) => {
+    await ctx.db.patch(runId, {
+      status: "completed",
+      completedAt,
+      imagesSaved,
+      imagesFailed,
+    });
   },
 });
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAction, useQuery } from "convex/react";
+import { Link } from "react-router-dom";
 import { api } from "@generated/api";
 import { useToast } from "@/components/toast";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
+  ImageIcon,
   Loader2,
   Play,
   Sparkles,
@@ -155,6 +157,12 @@ function RunCard({ run, tasks, onView }: { run: PipelineRun; tasks: PipelineTask
               {fmtDate(run.createdAt)}
               {run.completedAt && ` · selesai ${fmtDate(run.completedAt)}`}
             </p>
+            {run.imagesSaved !== undefined && run.imagesSaved > 0 && (
+              <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-success">
+                <ImageIcon className="h-3 w-3" />
+                {run.imagesSaved} gambar disimpan ke Galeri
+              </p>
+            )}
           </div>
           <Badge variant={RUN_STATUS[run.status] ?? "outline"}>
             {run.status === "running" && (
@@ -205,6 +213,7 @@ export function PipelinePage() {
   const [topic, setTopic] = useState("");
   const [running, setRunning] = useState(false);
   const [activeRunId, setActiveRunId] = useState<Id<"pipelineRuns"> | null>(null);
+  const [lastImages, setLastImages] = useState<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Poll for the active run's tasks every 3s while running
@@ -235,7 +244,13 @@ export function PipelinePage() {
       const result = await runPipeline({ topic: trimmed });
       if (result.ok) {
         setActiveRunId(result.runId);
-        showToast("Pipeline selesai! 🎉", "success");
+        setLastImages(result.imagesSaved ?? 0);
+        showToast(
+          result.imagesSaved > 0
+            ? `Pipeline selesai! ${result.imagesSaved} gambar masuk Galeri 🎉`
+            : "Pipeline selesai! 🎉",
+          "success"
+        );
       } else {
         showToast(result.error ?? "Pipeline gagal.", "error");
       }
@@ -319,12 +334,40 @@ export function PipelinePage() {
           {isAnyRunning && (
             <div className="mt-4 flex items-center gap-2 rounded-lg bg-info-bg p-3 text-sm text-info">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Pipeline lagi jalan — 5 agent bakal dipanggil berurutan. Ini bisa
-              makan waktu 30-60 detik.
+              Pipeline lagi jalan — 5 agent dipanggil berurutan, lalu 2 gambar
+              AI dibuat &amp; disimpan otomatis ke Galeri. Ini bisa makan waktu
+              1-3 menit.
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* ── Images saved to Galeri ───────────────────────── */}
+      {lastImages !== null && lastImages > 0 && (
+        <Card className="mb-8 border-success/25 bg-success-bg">
+          <CardContent className="flex flex-col items-center justify-between gap-3 p-4 sm:flex-row">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/15 text-success">
+                <ImageIcon className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-ink">
+                  {lastImages} gambar AI masuk Galeri 🎨
+                </p>
+                <p className="text-xs text-ink-2">
+                  Sampul produk &amp; hero landing page otomatis disimpan — cek
+                  di Galeri.
+                </p>
+              </div>
+            </div>
+            <Link to="/dashboard/gallery">
+              <Button size="sm" variant="outline" className="shrink-0">
+                Buka Galeri
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Agent Team Visual ────────────────────────────── */}
       <Card className="mb-8">

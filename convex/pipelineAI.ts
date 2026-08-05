@@ -8,6 +8,8 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 
 const MODEL = "gpt-4o-mini";
+const IMAGE_MODEL = "gpt-image-1";
+const IMAGE_COST_PER_IMAGE = 0.042; // USD per 1024x1024 (medium quality)
 
 const PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
   "gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
@@ -113,7 +115,13 @@ function runPipelineHandler(
   ctx: any,
   args: { topic: string }
 ): Promise<
-  | { ok: true; runId: Id<"pipelineRuns">; outputs: { agent: string; output: string }[] }
+  | {
+      ok: true;
+      runId: Id<"pipelineRuns">;
+      imagesSaved: number;
+      imagesFailed: number;
+      outputs: { agent: string; output: string }[];
+    }
   | { ok: false; error: string }
 > {
   return (async (ctx, { topic }) => {
@@ -226,14 +234,95 @@ function runPipelineHandler(
       }
     }
 
+    // ── Generate & auto-save output images to Galeri ──
+    let imagesSaved = 0;
+    let imagesFailed = 0;
+
+    const productSnippet = (runningContext.PRODUCT ?? topic).slice(0, 700);
+    const copySnippet = (runningContext.COPY ?? "").slice(0, 300);
+    const designSnippet = (
+      runningContext.DESIGN ?? runningContext.PRODUCT ?? topic
+    ).slice(0, 700);
+
+    const imageSpecs = [
+      {
+        name: `[Pipeline] ${topic} — Sampul Produk.png`,
+        prompt: `Buat sampul ebook digital premium untuk topik "${topic}".
+
+Konsep produk:
+${productSnippet}
+
+Headline utama:
+${copySnippet}
+
+Gaya: modern, profesional, warna menonjol, tipografi tebal, judul singkat dalam Bahasa Indonesia (maks 4 kata), tanpa teks panjang.`,
+      },
+      {
+        name: `[Pipeline] ${topic} — Hero Landing Page.png`,
+        prompt: `Buat ilustrasi hero section untuk landing page produk digital bertema "${topic}".
+
+Arahan desain:
+${designSnippet}
+
+Gaya: clean, modern, premium, rasio persegi, tanpa elemen UI browser, tanpa teks panjang.`,
+      },
+    ];
+
+    for (const spec of imageSpecs) {
+      try {
+        const res = await openai.images.generate({
+          model: IMAGE_MODEL,
+          prompt: spec.prompt,
+          n: 1,
+          size: "1024x1024",
+          response_format: "b64_json",
+          output_format: "png",
+        });
+        const b64 = res.data?.[0]?.b64_json;
+        if (!b64) throw new Error("OpenAI tidak mengembalikan data gambar.");
+
+        const buffer = Buffer.from(b64, "base64");
+        const storageId = await ctx.storage.store(
+          new Blob([buffer], { type: "image/png" })
+        );
+
+        await ctx.runMutation(internal.gallery.saveInternal, {
+          userId,
+          storageId,
+          name: spec.name,
+          mimeType: "image/png",
+          size: buffer.length,
+        });
+
+        await ctx.runMutation(internal.usage.insertUsage, {
+          userId,
+          source: "Pipeline: Gambar AI",
+          model: IMAGE_MODEL,
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+          cost: IMAGE_COST_PER_IMAGE,
+          createdAt: Date.now(),
+        });
+
+        imagesSaved += 1;
+      } catch {
+        imagesFailed += 1;
+      }
+    }
+
     await ctx.runMutation(internal.pipelineData.completeRun, {
       runId,
       completedAt: Date.now(),
+      imagesSaved,
+      imagesFailed,
     });
 
     return {
       ok: true as const,
       runId,
+      imagesSaved,
+      imagesFailed,
       outputs: agentOrder.map((id) => ({
         agent: id,
         output: runningContext[`${id.toUpperCase()}_OUTPUT`] ?? "",
