@@ -5,6 +5,7 @@ import { KeyRound, Loader2, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BrandMark } from "@/components/BrandMark";
 import { cn } from "@/lib/utils";
 
 type Mode = "signIn" | "signUp";
@@ -52,11 +53,9 @@ export function AuthPage() {
       <div className="w-full max-w-md">
         <Link
           to="/"
-          className="mx-auto mb-6 flex w-fit items-center gap-3"
+          className="group mx-auto mb-6 flex w-fit items-center gap-3"
         >
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand text-base font-black tracking-tight text-on-primary shadow-pop transition-transform hover:scale-105">
-            LD
-          </span>
+          <BrandMark className="h-12 w-12 shrink-0 transition-transform group-hover:scale-105" />
           <span className="font-display text-sm font-bold text-ink">
             Leveling Digital
           </span>

@@ -15,6 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/BrandMark";
 import { HomePage } from "@/pages/dashboard/HomePage";
 import { ProductsPage } from "@/pages/dashboard/ProductsPage";
 import { GalleryPage } from "@/pages/dashboard/GalleryPage";
@@ -74,9 +75,7 @@ export function DashboardPage() {
           to="/dashboard"
           className="mb-6 flex items-center gap-3 px-5 pt-5"
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-sm font-black tracking-tight text-[var(--text-on-primary)] shadow-lg">
-            LD
-          </span>
+          <BrandMark className="h-10 w-10 shrink-0" />
           {expanded && (
             <span className="whitespace-nowrap text-sm font-bold text-white">
               Leveling Digital

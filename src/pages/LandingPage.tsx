@@ -20,6 +20,7 @@ import { AGENTS } from "@/data/team";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { BrandMark } from "@/components/BrandMark";
 
 const AGENT_ICONS: Record<string, typeof Search> = {
   maya: Search,
@@ -76,10 +77,8 @@ export function LandingPage() {
       {/* ── Nav ─────────────────────────────────────────── */}
       <header className="sticky top-0 z-sticky border-b border-border-d/70 bg-app/85 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <Link to="/" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand font-display text-sm font-black tracking-tight text-on-primary shadow-pop transition-transform group-hover:scale-105">
-              LD
-            </span>
+          <Link to="/" className="group flex items-center gap-3">
+            <BrandMark className="h-10 w-10 shrink-0 transition-transform group-hover:scale-105" />
             <span className="font-display text-sm font-bold text-ink">
               Leveling Digital
             </span>
@@ -417,9 +416,7 @@ export function LandingPage() {
       <footer className="border-t border-border-d py-10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-ink-3 sm:flex-row">
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-xs font-black text-on-primary">
-              LD
-            </span>
+            <BrandMark className="h-7 w-7" />
             <span className="font-medium text-ink-2">Leveling Digital</span>
           </div>
           <p>© 2026 Leveling Digital. Dibuat bareng tim AI.</p>
