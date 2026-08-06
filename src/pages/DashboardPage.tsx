@@ -96,14 +96,23 @@ export function DashboardPage() {
                   cn(
                     "relative mx-2.5 flex h-10 items-center gap-3 rounded-[10px] px-2.5 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]"
+                      ? "bg-[#FAA61A]/15 text-[#FAA61A]"
                       : "hover:bg-white/8 hover:text-white",
                     !expanded && "justify-center px-0"
                   )
                 }
               >
-                <Icon className="h-[18px] w-[18px] shrink-0" />
-                {expanded && <span className="whitespace-nowrap">{item.label}</span>}
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#FAA61A]" />
+                    )}
+                    <Icon className="h-[18px] w-[18px] shrink-0" />
+                    {expanded && (
+                      <span className="whitespace-nowrap">{item.label}</span>
+                    )}
+                  </>
+                )}
               </NavLink>
             );
           })}

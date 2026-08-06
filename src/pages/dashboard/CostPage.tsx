@@ -85,7 +85,8 @@ export function CostPage() {
     <div>
       <header className="mb-8">
         <h1 className="font-display text-3xl font-black text-ink">Biaya</h1>
-        <p className="mt-1 text-ink-2">
+        <div className="mt-2 h-1 w-12 rounded-full bg-gradient-to-r from-[#303188] to-[#FAA61A]" />
+        <p className="mt-3 text-ink-2">
           Pemakaian AI lu secara real-time — dihitung dari tiap panggilan model
           yang beneran kepake.
         </p>
@@ -108,7 +109,7 @@ export function CostPage() {
           value={fmtTokens(s.totalTokens)}
           sub={`${s.totalCalls} panggilan AI`}
         />
-        <Card className="border-border-d bg-[var(--brand-primary)]/5">
+        <Card className="border-border-d bg-[#FAA61A]/10">
           <CardContent className="p-5">
             <p className="text-xs font-semibold uppercase tracking-wider text-ink-2">
               Estimasi Produk
@@ -146,7 +147,7 @@ export function CostPage() {
             </div>
           ) : rows.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-brand">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FAA61A]/15 text-[#FAA61A]">
                 <Coins className="h-7 w-7" />
               </div>
               <div>
@@ -234,7 +235,7 @@ export function CostPage() {
       <Card>
         <CardContent className="p-6">
           <div className="mb-4 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-brand" />
+            <Sparkles className="h-4 w-4 text-[#FAA61A]" />
             <h2 className="font-display text-lg font-bold text-ink">
               Referensi Estimasi per Agent
             </h2>

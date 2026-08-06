@@ -150,7 +150,7 @@ function RunCard({ run, tasks, onView }: { run: PipelineRun; tasks: PipelineTask
           onClick={() => setExpanded((v) => !v)}
           className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-muted/40"
         >
-          <Sparkles className="h-5 w-5 text-brand shrink-0" />
+          <Sparkles className="h-5 w-5 text-[#FAA61A] shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-ink truncate">{run.topic}</p>
             <p className="text-xs text-ink-3">
@@ -271,7 +271,8 @@ export function PipelinePage() {
     <div>
       <header className="mb-8">
         <h1 className="font-display text-3xl font-black text-ink">Pipeline AI</h1>
-        <p className="mt-1 text-ink-2">
+        <div className="mt-2 h-1 w-12 rounded-full bg-gradient-to-r from-[#303188] to-[#FAA61A]" />
+        <p className="mt-3 text-ink-2">
           Jalanin 5 agent AI sekaligus — dari riset sampai storyboard — dalam satu pipeline.
         </p>
       </header>
@@ -416,13 +417,13 @@ export function PipelinePage() {
 
       {runs === undefined ? (
         <div className="flex h-32 items-center justify-center text-sm text-ink-2">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin text-brand" />
+          <Loader2 className="mr-2 h-4 w-4 animate-spin text-[#FAA61A]" />
           Loading...
         </div>
       ) : runs.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-            <Sparkles className="h-10 w-10 text-ink-3" />
+            <Sparkles className="h-10 w-10 text-[#FAA61A]" />
             <div>
               <p className="font-semibold text-ink">Belum ada pipeline</p>
               <p className="text-sm text-ink-2">

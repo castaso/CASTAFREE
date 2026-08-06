@@ -68,7 +68,7 @@ export function HomePage() {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center text-ink-2">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin text-brand" />
+        <Loader2 className="mr-2 h-4 w-4 animate-spin text-[#FAA61A]" />
         Memuat studio...
       </div>
     );
@@ -80,7 +80,8 @@ export function HomePage() {
         <h1 className="font-display text-3xl font-black text-ink">
           {license ? `Halo, ${license.customerName ?? "Bos"}! 👋` : "Aktivasi CAST/|FREE"}
         </h1>
-        <p className="mt-1 text-ink-2">
+        <div className="mt-2 h-1 w-12 rounded-full bg-gradient-to-r from-[#303188] to-[#FAA61A]" />
+        <p className="mt-3 text-ink-2">
           {license
             ? "Studio siap dipakai. Tim AI-mu standby buat kerja."
             : "Masukin email + license key dari email aktivasi yang lu terima setelah purchase."}
@@ -108,7 +109,7 @@ export function HomePage() {
             </Card>
             <Card className="transition-all hover:shadow-pop">
               <CardContent className="flex items-center gap-4 p-5">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand/10 text-brand">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAA61A]/15 text-[#FAA61A]">
                   <Boxes className="h-5 w-5" />
                 </span>
                 <div>
@@ -251,7 +252,7 @@ export function HomePage() {
               href="https://levelingdigital.com"
               target="_blank"
               rel="noreferrer"
-              className="font-semibold text-brand hover:underline"
+              className="font-semibold text-[#FAA61A] hover:underline"
             >
               Order disini
             </a>{" "}

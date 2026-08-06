@@ -61,7 +61,8 @@ export function AuthPage() {
           </span>
         </Link>
 
-        <div className="rounded-2xl border border-border-d bg-surface p-7 shadow-card">
+        <div className="relative overflow-hidden rounded-2xl border border-border-d bg-surface p-7 pt-9 shadow-card">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#303188] via-[#303188] to-[#FAA61A]" />
           <div className="mb-6 text-center">
             <h1 className="font-display text-2xl font-black text-ink">
               {mode === "signIn" ? "Masuk ke Studio" : "Bikin Akun"}
@@ -155,7 +156,7 @@ export function AuthPage() {
           </form>
 
           <div className="mt-5 flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-xs text-ink-2">
-            <KeyRound className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />
+            <KeyRound className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FAA61A]" />
             <p>
               Setelah masuk, aktivasi license key-mu buat akses studio penuh.
               Belum punya license?{" "}
@@ -163,7 +164,7 @@ export function AuthPage() {
                 href="https://levelingdigital.com"
                 target="_blank"
                 rel="noreferrer"
-                className="font-semibold text-brand hover:underline"
+                className="font-semibold text-[#FAA61A] hover:underline"
               >
                 Order disini
               </a>

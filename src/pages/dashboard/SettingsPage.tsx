@@ -15,7 +15,8 @@ export function SettingsPage() {
     <div>
       <header className="mb-8">
         <h1 className="font-display text-3xl font-black text-ink">Pengaturan</h1>
-        <p className="mt-1 text-ink-2">
+        <div className="mt-2 h-1 w-12 rounded-full bg-gradient-to-r from-[#303188] to-[#FAA61A]" />
+        <p className="mt-3 text-ink-2">
           Konfigurasi akun, API keys, dan preferensi aplikasi.
         </p>
       </header>
@@ -105,7 +106,7 @@ export function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <KeyRound className="h-4 w-4 text-brand" />
+              <KeyRound className="h-4 w-4 text-[#FAA61A]" />
               Akun
             </CardTitle>
             <CardDescription>Keluar dari studio.</CardDescription>

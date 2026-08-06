@@ -23,7 +23,8 @@ export function AvatarsPage() {
     <div>
       <header className="mb-8">
         <h1 className="font-display text-3xl font-black text-ink">Avatar</h1>
-        <p className="mt-1 text-ink-2">
+        <div className="mt-2 h-1 w-12 rounded-full bg-gradient-to-r from-[#303188] to-[#FAA61A]" />
+        <p className="mt-3 text-ink-2">
           AI Avatar team yang siap bantu bikin konten digital lu.
         </p>
       </header>

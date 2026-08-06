@@ -266,7 +266,8 @@ export function GalleryPage() {
             <h1 className="font-display text-3xl font-black text-ink">
               Galeri
             </h1>
-            <p className="mt-1 text-ink-2">
+            <div className="mt-2 h-1 w-12 rounded-full bg-gradient-to-r from-[#303188] to-[#FAA61A]" />
+            <p className="mt-3 text-ink-2">
               Koleksi visual dari semua produk yang udah dibuat.
             </p>
           </div>
@@ -321,7 +322,7 @@ export function GalleryPage() {
               id="gallery-type-filter"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-10 cursor-pointer rounded-lg border border-border-d bg-surface px-3 text-sm font-semibold text-ink outline-none transition-colors hover:border-brand focus-visible:ring-2 focus-visible:ring-[var(--border-focus)]"
+              className="h-10 cursor-pointer rounded-lg border border-border-d bg-surface px-3 text-sm font-semibold text-ink outline-none transition-colors hover:border-[#FAA61A] focus-visible:ring-2 focus-visible:ring-[var(--border-focus)]"
             >
               {TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -346,13 +347,13 @@ export function GalleryPage() {
       >
         {items === undefined ? (
           <div className="flex h-48 items-center justify-center text-ink-2">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin text-brand" />
+            <Loader2 className="mr-2 h-4 w-4 animate-spin text-[#FAA61A]" />
             Loading...
           </div>
         ) : items.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted text-ink-3">
+              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FAA61A]/15 text-[#FAA61A]">
                 <ImageIcon className="h-8 w-8" />
               </span>
               <div>
@@ -383,7 +384,7 @@ export function GalleryPage() {
         ) : filtered.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-ink-3">
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FAA61A]/15 text-[#FAA61A]">
                 <ImageIcon className="h-6 w-6" />
               </span>
               <div>
@@ -427,9 +428,9 @@ export function GalleryPage() {
 
         {/* Drag overlay */}
         {dragActive && (
-          <div className="pointer-events-none absolute inset-0 z-overlay flex items-center justify-center rounded-2xl border-2 border-dashed border-brand bg-brand/5 backdrop-blur-[2px]">
+          <div className="pointer-events-none absolute inset-0 z-overlay flex items-center justify-center rounded-2xl border-2 border-dashed border-[#FAA61A] bg-[#FAA61A]/5 backdrop-blur-[2px]">
             <div className="flex flex-col items-center gap-3 rounded-xl bg-surface px-8 py-6 text-center shadow-modal animate-fade-up">
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FAA61A]/15 text-[#FAA61A]">
                 <CloudUpload className="h-7 w-7" />
               </span>
               <div>

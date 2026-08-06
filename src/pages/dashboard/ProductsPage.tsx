@@ -83,7 +83,8 @@ export function ProductsPage() {
     <div>
       <header className="mb-8">
         <h1 className="font-display text-3xl font-black text-ink">Produk</h1>
-        <p className="mt-1 text-ink-2">
+        <div className="mt-2 h-1 w-12 rounded-full bg-gradient-to-r from-[#303188] to-[#FAA61A]" />
+        <p className="mt-3 text-ink-2">
           Semua produk digital yang udah lu bangun bareng tim AI.
         </p>
       </header>
@@ -105,7 +106,7 @@ export function ProductsPage() {
 
           {products === undefined ? (
             <div className="flex h-48 items-center justify-center text-ink-2">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin text-brand" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin text-[#FAA61A]" />
               Loading...
             </div>
           ) : filtered.length === 0 ? (
@@ -164,7 +165,7 @@ export function ProductsPage() {
         <Card className="h-fit">
           <CardContent className="p-5">
             <h2 className="mb-4 flex items-center gap-2 font-display text-base font-bold text-ink">
-              <Plus className="h-4 w-4 text-brand" />
+              <Plus className="h-4 w-4 text-[#FAA61A]" />
               Produk Baru
             </h2>
             <form onSubmit={onCreate} className="space-y-4">

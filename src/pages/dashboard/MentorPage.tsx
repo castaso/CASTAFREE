@@ -103,7 +103,8 @@ export function MentorPage() {
             <h1 className="font-display text-3xl font-black text-ink">
               AI Mentor
             </h1>
-            <p className="mt-1 text-ink-2">
+            <div className="mt-2 h-1 w-12 rounded-full bg-gradient-to-r from-[#303188] to-[#FAA61A]" />
+            <p className="mt-3 text-ink-2">
               Tanya apa aja soal skill digital, produk, atau konten — jawabannya
               langsung dari AI.
             </p>
@@ -121,7 +122,7 @@ export function MentorPage() {
           <CardContent className="h-full overflow-y-auto p-2">
             {chats === undefined ? (
               <div className="flex h-full items-center justify-center text-ink-2">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin text-brand" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin text-[#FAA61A]" />
               </div>
             ) : chats.length === 0 ? (
               <div className="p-6 text-center text-sm text-ink-2">
@@ -136,7 +137,7 @@ export function MentorPage() {
                     className={cn(
                       "group flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
                       activeChatId === chat._id
-                        ? "bg-brand/10 text-ink"
+                        ? "bg-[#FAA61A]/15 text-ink"
                         : "text-ink-2 hover:bg-muted hover:text-ink"
                     )}
                   >
@@ -167,7 +168,7 @@ export function MentorPage() {
         <Card className="flex min-h-0 flex-col overflow-hidden">
           {activeChat === null ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 p-10 text-center">
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FAA61A]/15 text-[#FAA61A]">
                 <Sparkles className="h-8 w-8" />
               </span>
               <div>
@@ -187,7 +188,7 @@ export function MentorPage() {
           ) : (
             <>
               <div className="flex items-center gap-2 border-b border-border-d px-5 py-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FAA61A]/15 text-[#FAA61A]">
                   <Bot className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
@@ -204,7 +205,7 @@ export function MentorPage() {
               <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
                 {messages === undefined ? (
                   <div className="flex h-full items-center justify-center text-ink-2">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin text-brand" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin text-[#FAA61A]" />
                   </div>
                 ) : (
                   messages.map((message: Message) => (
@@ -257,7 +258,7 @@ function MessageBubble({ message }: { message: Message }) {
       <span
         className={cn(
           "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-          isUser ? "bg-ink/10 text-ink" : "bg-brand/10 text-brand"
+          isUser ? "bg-ink/10 text-ink" : "bg-[#FAA61A]/15 text-[#FAA61A]"
         )}
       >
         {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
@@ -279,13 +280,13 @@ function MessageBubble({ message }: { message: Message }) {
 function TypingBubble() {
   return (
     <div className="flex gap-3">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FAA61A]/15 text-[#FAA61A]">
         <Bot className="h-4 w-4" />
       </span>
       <div className="flex items-center gap-1.5 rounded-xl rounded-tl-sm border border-border-d bg-surface px-4 py-3.5 shadow-card">
-        <span className="h-2 w-2 animate-pulse rounded-full bg-brand" />
-        <span className="h-2 w-2 animate-pulse rounded-full bg-brand [animation-delay:150ms]" />
-        <span className="h-2 w-2 animate-pulse rounded-full bg-brand [animation-delay:300ms]" />
+        <span className="h-2 w-2 animate-pulse rounded-full bg-[#FAA61A]" />
+        <span className="h-2 w-2 animate-pulse rounded-full bg-[#FAA61A] [animation-delay:150ms]" />
+        <span className="h-2 w-2 animate-pulse rounded-full bg-[#FAA61A] [animation-delay:300ms]" />
       </div>
     </div>
   );

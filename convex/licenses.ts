@@ -11,7 +11,7 @@ type ActivateResponse = {
 };
 
 /**
- * Validates a license key + email against the live Leveling Digital
+ * Validates a license key + email against the live CAST/|FREE
  * license server. Returns the parsed result; on success the client
  * persists the activation via `recordActivation`.
  */
