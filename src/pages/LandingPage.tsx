@@ -42,12 +42,12 @@ const FEATURES = [
   {
     icon: Layers,
     title: "Pipeline AI Terpadu",
-    desc: "Dari riset sampai produksi, semua agent bekerja dalam satu alur yang bisa lu pantau live.",
+    desc: "5 agent bekerja dalam satu alur — riset sampai produksi — yang bisa lu pantau live di dashboard.",
   },
   {
     icon: Zap,
     title: "Langsung Jadi",
-    desc: "Produk digital, copy, dan desain di-generate otomatis — tinggal review dan publish.",
+    desc: "Copy, desain, dan gambar AI di-generate otomatis lalu masuk Galeri — tinggal review dan publish.",
   },
   {
     icon: ShieldCheck,
@@ -57,17 +57,17 @@ const FEATURES = [
   {
     icon: BarChart3,
     title: "Kontrol Biaya",
-    desc: "Estimasi penggunaan AI per agent biar budget tetep sehat dan jelas.",
+    desc: "Semua pemakaian AI tercatat otomatis di halaman Biaya — token dan estimasi cost per agent, transparan.",
   },
   {
     icon: GraduationCap,
-    title: "AI Mentor",
-    desc: "Belajar skill digital bareng mentor AI yang selalu siap 24/7.",
+    title: "AI Mentor 24/7",
+    desc: "Belajar skill digital bareng mentor AI berbahasa Indonesia yang selalu siap kapan aja.",
   },
   {
     icon: KeyRound,
     title: "Satu Key, Semua Akses",
-    desc: "Aktivasi sekali, langsung akses semua fitur studio.",
+    desc: "Aktivasi sekali, langsung akses semua fitur studio — pipeline, mentor, galeri, dan biaya.",
   },
 ];
 
@@ -114,7 +114,7 @@ export function LandingPage() {
           className="pointer-events-none absolute inset-0 opacity-[0.5]"
           style={{
             background:
-              "radial-gradient(600px 300px at 70% 0%, rgba(239,68,68,0.14), transparent 70%), radial-gradient(500px 260px at 15% 10%, rgba(139,92,246,0.10), transparent 70%)",
+              "radial-gradient(620px 320px at 72% 0%, rgba(250,166,26,0.20), transparent 70%), radial-gradient(560px 300px at 12% 8%, rgba(48,49,136,0.55), transparent 72%)",
           }}
         />
         <div className="relative mx-auto grid max-w-6xl gap-12 px-6 pb-20 pt-20 lg:grid-cols-[1.1fr_0.9fr] lg:pt-28">
@@ -123,18 +123,19 @@ export function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           >
-            <Badge variant="outline" className="mb-5 gap-1.5">
-              <Sparkles className="h-3 w-3 text-brand" />
+            <Badge variant="outline" className="mb-5 gap-1.5 uppercase tracking-wider">
+              <Sparkles className="h-3 w-3 text-[#FAA61A]" />
               Powered by 5 AI Agents
             </Badge>
             <h1 className="font-display text-4xl font-black leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
               Bangun produk digital
-              <span className="text-brand"> bareng tim AI</span> yang selalu on.
+              <span className="text-[#FAA61A]"> bareng tim AI</span> yang selalu on.
             </h1>
             <p className="mt-5 max-w-xl text-lg text-ink-2">
-              CAST/|FREE menggabungkan research, copywriting, product building,
-              desain, dan produksi video dalam satu studio — dikerjakan agent AI
-              yang saling nyambung.
+              CAST/|FREE menggabungkan riset, copywriting, product building,
+              desain, dan produksi video dalam satu studio — dikerjakan 5 agent
+              AI yang saling nyambung, plus gambar AI yang langsung mendarat di
+              Galeri.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button size="lg" asChild>
@@ -172,7 +173,8 @@ export function LandingPage() {
             transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
             className="relative"
           >
-            <div className="rounded-2xl border border-border-d bg-surface p-5 shadow-card">
+            <div className="relative overflow-hidden rounded-2xl border border-border-d bg-surface p-5 pt-6 shadow-card">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#303188] via-[#303188] to-[#FAA61A]" />
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-sm font-semibold text-ink">Pipeline berjalan</p>
                 <Badge variant="info">live</Badge>
@@ -185,7 +187,7 @@ export function LandingPage() {
                       key={item.step}
                       className="flex items-center gap-3 rounded-lg border border-border-d bg-app px-3 py-2.5"
                     >
-                      <span className="flex h-8 w-8 items-center justify-center rounded-md bg-brand/10 text-brand">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[#FAA61A]/15 text-[#FAA61A]">
                         <Icon className="h-4 w-4" />
                       </span>
                       <div className="flex-1">
@@ -233,7 +235,7 @@ export function LandingPage() {
       <section id="agents" className="border-y border-border-d bg-surface/60 py-20">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-10 max-w-2xl">
-            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-brand">
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#FAA61A]">
               Tim AI
             </p>
             <h2 className="font-display text-3xl font-black tracking-tight text-ink sm:text-4xl">
@@ -288,7 +290,7 @@ export function LandingPage() {
       <section id="pipeline" className="py-20">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-10 max-w-2xl">
-            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-brand">
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#FAA61A]">
               Cara Kerja
             </p>
             <h2 className="font-display text-3xl font-black tracking-tight text-ink sm:text-4xl">
@@ -307,10 +309,16 @@ export function LandingPage() {
                   transition={{ duration: 0.4, delay: index * 0.08 }}
                   className="relative rounded-xl border border-border-d bg-surface p-5 shadow-card"
                 >
-                  <span className="font-mono text-[11px] font-semibold text-brand">
+                  <span className="font-mono text-[11px] font-semibold text-[#FAA61A]">
                     {item.step}
                   </span>
-                  <span className="mt-3 flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-brand">
+                  <span
+                    className={`mt-3 flex h-9 w-9 items-center justify-center rounded-lg shadow-lg ${
+                      index % 2 === 0
+                        ? "bg-[#303188] text-white"
+                        : "bg-[#FAA61A] text-[#1a1a1a]"
+                    }`}
+                  >
                     <Icon className="h-4 w-4" />
                   </span>
                   <h3 className="mt-3 font-display text-sm font-bold text-ink">
@@ -330,7 +338,7 @@ export function LandingPage() {
       <section id="features" className="border-y border-border-d bg-surface/60 py-20">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-10 max-w-2xl">
-            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-brand">
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#FAA61A]">
               Fitur
             </p>
             <h2 className="font-display text-3xl font-black tracking-tight text-ink sm:text-4xl">
@@ -347,9 +355,15 @@ export function LandingPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-40px" }}
                   transition={{ duration: 0.4, delay: index * 0.05 }}
-                  className="rounded-xl border border-border-d bg-surface p-6 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-pop"
+                  className="group rounded-xl border border-border-d bg-surface p-6 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-pop"
                 >
-                  <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
+                  <span
+                    className={`mb-4 flex h-10 w-10 items-center justify-center rounded-lg shadow-lg transition-transform group-hover:scale-110 ${
+                      index % 2 === 0
+                        ? "bg-[#303188] text-white"
+                        : "bg-[#FAA61A] text-[#1a1a1a]"
+                    }`}
+                  >
                     <Icon className="h-5 w-5" />
                   </span>
                   <h3 className="font-display text-base font-bold text-ink">
@@ -379,7 +393,7 @@ export function LandingPage() {
               className="pointer-events-none absolute inset-0 opacity-40"
               style={{
                 background:
-                  "radial-gradient(420px 220px at 50% 0%, rgba(239,68,68,0.35), transparent 70%)",
+                  "radial-gradient(420px 220px at 50% 0%, rgba(250,166,26,0.30), transparent 70%), radial-gradient(420px 240px at 15% 100%, rgba(48,49,136,0.65), transparent 70%)",
               }}
             />
             <div className="relative">
