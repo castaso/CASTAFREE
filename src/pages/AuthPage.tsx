@@ -57,7 +57,7 @@ export function AuthPage() {
         >
           <BrandMark className="h-12 w-12 shrink-0 transition-transform group-hover:scale-105" />
           <span className="font-display text-sm font-bold text-ink">
-            Leveling Digital
+            CAST/|FREE
           </span>
         </Link>
 

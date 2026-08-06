@@ -78,7 +78,7 @@ export function DashboardPage() {
           <BrandMark className="h-10 w-10 shrink-0" />
           {expanded && (
             <span className="whitespace-nowrap text-sm font-bold text-white">
-              Leveling Digital
+              CAST/|FREE
             </span>
           )}
         </Link>

@@ -52,7 +52,7 @@ const FEATURES = [
   {
     icon: ShieldCheck,
     title: "Aktivasi License Aman",
-    desc: "Setiap lisensi diverifikasi ke server resmi Leveling Digital, maksimal 1 device.",
+    desc: "Setiap lisensi diverifikasi ke server resmi CAST/|FREE, maksimal 1 device.",
   },
   {
     icon: BarChart3,
@@ -80,7 +80,7 @@ export function LandingPage() {
           <Link to="/" className="group flex items-center gap-3">
             <BrandMark className="h-10 w-10 shrink-0 transition-transform group-hover:scale-105" />
             <span className="font-display text-sm font-bold text-ink">
-              Leveling Digital
+              CAST/|FREE
             </span>
           </Link>
           <nav className="hidden items-center gap-7 text-sm font-medium text-ink-2 md:flex">
@@ -132,9 +132,9 @@ export function LandingPage() {
               <span className="text-brand"> bareng tim AI</span> yang selalu on.
             </h1>
             <p className="mt-5 max-w-xl text-lg text-ink-2">
-              Leveling Digital menggabungkan research, copywriting, product
-              building, desain, dan produksi video dalam satu studio — dikerjakan
-              agent AI yang saling nyambung.
+              CAST/|FREE menggabungkan research, copywriting, product building,
+              desain, dan produksi video dalam satu studio — dikerjakan agent AI
+              yang saling nyambung.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button size="lg" asChild>
@@ -417,9 +417,9 @@ export function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-ink-3 sm:flex-row">
           <div className="flex items-center gap-2">
             <BrandMark className="h-7 w-7" />
-            <span className="font-medium text-ink-2">Leveling Digital</span>
+            <span className="font-medium text-ink-2">CAST/|FREE</span>
           </div>
-          <p>© 2026 Leveling Digital. Dibuat bareng tim AI.</p>
+          <p>© 2026 CAST/|FREE. Dibuat bareng tim AI.</p>
         </div>
       </footer>
     </div>

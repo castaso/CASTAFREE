@@ -78,7 +78,7 @@ export function HomePage() {
     <div className="space-y-6">
       <header>
         <h1 className="font-display text-3xl font-black text-ink">
-          {license ? `Halo, ${license.customerName ?? "Bos"}! 👋` : "Aktivasi Leveling Digital"}
+          {license ? `Halo, ${license.customerName ?? "Bos"}! 👋` : "Aktivasi CAST/|FREE"}
         </h1>
         <p className="mt-1 text-ink-2">
           {license
