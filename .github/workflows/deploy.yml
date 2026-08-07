@@ -1,0 +1,58 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Check VITE_CONVEX_URL secret
+        # The frontend talks to the Convex backend through this URL. The dev
+        # sandbox uses a local URL (127.0.0.1), which GitHub Pages visitors
+        # cannot reach — set this secret to your public Convex deployment URL
+        # (e.g. https://<project>.convex.cloud) after `npx convex deploy`.
+        env:
+          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+        run: |
+          if [ -z "$VITE_CONVEX_URL" ]; then
+            echo "::error::VITE_CONVEX_URL secret is not set. Add it in Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      - name: Build
+        env:
+          GH_PAGES: "true"
+          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+        run: bun run build
+
+      - name: SPA fallback (404.html trick)
+        # GitHub Pages serves 404.html for unknown paths, so client-side
+        # routes like /auth and /dashboard load the app shell.
+        run: cp dist/index.html dist/404.html
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          force_orphan: true
