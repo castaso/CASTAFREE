@@ -25,20 +25,12 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Check VITE_CONVEX_URL secret
-        # The frontend talks to the Convex backend through this URL. The dev
-        # sandbox uses a local URL (127.0.0.1), which GitHub Pages visitors
-        # cannot reach — set this secret to your public Convex deployment URL
-        # (e.g. https://<project>.convex.cloud) after `npx convex deploy`.
-        env:
-          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
-        run: |
-          if [ -z "$VITE_CONVEX_URL" ]; then
-            echo "::error::VITE_CONVEX_URL secret is not set. Add it in Settings → Secrets and variables → Actions."
-            exit 1
-          fi
-
       - name: Build
+        # The frontend talks to the Convex backend through VITE_CONVEX_URL.
+        # It is optional: without it the app renders the static landing page
+        # (see src/main.tsx). Set the VITE_CONVEX_URL secret to your public
+        # Convex deployment URL (e.g. https://<project>.convex.cloud) after
+        # `npx convex deploy` to enable auth + dashboard features.
         env:
           GH_PAGES: "true"
           VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
