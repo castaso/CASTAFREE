@@ -25,6 +25,19 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Deploy Convex backend
+        # Pushes Convex functions + schema to the production deployment.
+        # Requires the CONVEX_DEPLOY_KEY secret (a real secret); skipped if
+        # it is not configured.
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: |
+          if [ -n "$CONVEX_DEPLOY_KEY" ]; then
+            npx convex deploy
+          else
+            echo "CONVEX_DEPLOY_KEY not set; skipping Convex backend deploy"
+          fi
+
       - name: Build
         # The frontend talks to the Convex backend through VITE_CONVEX_URL.
         # This is a public Convex deployment URL (not a secret), so it is
