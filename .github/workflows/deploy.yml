@@ -27,13 +27,11 @@ jobs:
 
       - name: Build
         # The frontend talks to the Convex backend through VITE_CONVEX_URL.
-        # It is optional: without it the app renders the static landing page
-        # (see src/main.tsx). Set the VITE_CONVEX_URL secret to your public
-        # Convex deployment URL (e.g. https://<project>.convex.cloud) after
-        # `npx convex deploy` to enable auth + dashboard features.
+        # This is a public Convex deployment URL (not a secret), so it is
+        # inlined here rather than read from a GitHub secret.
         env:
           GH_PAGES: "true"
-          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+          VITE_CONVEX_URL: "https://giddy-labrador-537.convex.cloud"
         run: bun run build
 
       - name: SPA fallback (404.html trick)
