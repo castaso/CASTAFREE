@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as gallery from "../gallery.js";
+import type * as http from "../http.js";
 import type * as licenses from "../licenses.js";
 import type * as mentor from "../mentor.js";
 import type * as mentorAI from "../mentorAI.js";
@@ -29,6 +30,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   gallery: typeof gallery;
+  http: typeof http;
   licenses: typeof licenses;
   mentor: typeof mentor;
   mentorAI: typeof mentorAI;
