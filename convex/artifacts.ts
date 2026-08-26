@@ -48,6 +48,7 @@ export const saveInternal = internalMutation({  args: {
     kind: v.union(
       v.literal("bvi"),
       v.literal("product_brief"),
+      v.literal("ugc_scripts"),
       v.literal("image_ad_brief"),
       v.literal("ebook_pdf"),
       v.literal("landing_page"),

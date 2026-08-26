@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAction, useQuery } from "convex/react";
-import { api } from "@generated/api";import type { Doc } from "@generated/dataModel";
+import { api } from "@generated/api";
+import type { Doc, Id } from "@generated/dataModel";
 import {
   ArrowLeft,
   Boxes,
@@ -17,14 +18,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/toast";
 import { AGENTS } from "@/data/team";
-import { ArtifactChip, RunCard } from "@/pages/dashboard/PipelinePage";
+import {
+  ArtifactChip,
+  RunCard,
+  TaskRow,
+} from "@/pages/dashboard/PipelinePage";
 
 type Product = Doc<"products">;
 type Artifact = Doc<"artifacts">;
+type PipelineRun = Doc<"pipelineRuns">;
+type PipelineTask = Doc<"pipelineTasks">;
 
 const ARTIFACT_GROUPS: { kinds: string[]; label: string }[] = [
   { kinds: ["product_brief"], label: "Produk Brief" },
   { kinds: ["bvi"], label: "Konsep & BVI" },
+  { kinds: ["ugc_scripts"], label: "Script UGC" },
   { kinds: ["image_ad_brief"], label: "Script & Image Ads" },
   { kinds: ["ebook_pdf"], label: "Ebook PDF" },
   { kinds: ["landing_page"], label: "Landing Page" },
@@ -200,6 +208,34 @@ function AgentRunner({ product }: { product: Product }) {
   );
   const [running, setRunning] = useState(false);
   const [renderingVeo, setRenderingVeo] = useState(false);
+  const [generateImages, setGenerateImages] = useState(false);
+
+  // Live progress (doc 08 "output streaming"): while a run executes we
+  // subscribe to its tasks; Convex reactivity pushes status changes.
+  const liveRuns = useQuery(
+    api.pipelineData.listRunsByProduct,
+    running ? { productId: product._id } : "skip"
+  );
+  const [activeRunId, setActiveRunId] = useState<Id<"pipelineRuns"> | null>(null);
+  const seenRunIds = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!running || !liveRuns) return;
+    // The newest run created after the user pressed Jalankan is ours.
+    const candidate = liveRuns.find(
+      (r: PipelineRun) =>
+        r.status === "running" && !seenRunIds.current.has(r._id)
+    );
+    if (candidate) {
+      seenRunIds.current.add(candidate._id);
+      setActiveRunId(candidate._id);
+    }
+  }, [running, liveRuns]);
+
+  const activeTasks = useQuery(
+    api.pipelineData.getTasksByRun,
+    activeRunId ? { runId: activeRunId } : "skip"
+  );
 
   async function onRenderVeo() {
     setRenderingVeo(true);
@@ -238,6 +274,7 @@ function AgentRunner({ product }: { product: Product }) {
         topic: product.name,
         agentIds: ids,
         productId: product._id,
+        generateImages,
       });
       if (result.ok) {
         showToast(
@@ -335,6 +372,23 @@ function AgentRunner({ product }: { product: Product }) {
               </button>
             );
           })}
+
+          {/* ── Image-gen opt-in (doc 08) ──────────────────── */}
+          {selected.includes("reza") && (
+            <label className="col-span-full flex cursor-pointer items-center gap-2 rounded-lg border border-border-d bg-app px-3 py-2.5 text-sm text-ink sm:col-span-2 lg:col-span-5">
+              <input
+                type="checkbox"
+                checked={generateImages}
+                onChange={(e) => setGenerateImages(e.target.checked)}
+                disabled={running}
+                className="h-4 w-4 accent-[#FAA61A]"
+              />
+              Generate image ads via KIE{" "}
+              <span className="text-xs text-ink-3">
+                — langsung dibikinin gambarnya (butuh KIE key di Pengaturan)
+              </span>
+            </label>
+          )}
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border-d pt-4">
@@ -356,6 +410,20 @@ function AgentRunner({ product }: { product: Product }) {
             {renderingVeo ? "Rendering... (1-4 menit)" : "Render Video VEO"}
           </Button>
         </div>
+
+        {/* ── Live task progress ─────────────────────────── */}
+        {running && activeTasks && activeTasks.length > 0 && (
+          <div className="mt-4 overflow-hidden rounded-xl border border-border-d">
+            {activeTasks.map((task: PipelineTask) => (
+              <TaskRow
+                key={task._id}
+                task={task}
+                isExpanded={task.status === "completed"}
+                onToggle={() => {}}
+              />
+            ))}
+          </div>
+        )}
 
         {running && (
           <div className="mt-4 flex items-center gap-2 rounded-lg bg-info-bg p-3 text-sm text-info">

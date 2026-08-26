@@ -5,6 +5,7 @@ import {
   type PDFFont,
   type PDFPage,
 } from "pdf-lib";
+import { parseCaptionBlock, type MetaCaption } from "./ugc";
 
 // ── Pure helpers (unit-tested in tests/ebookPdf.test.ts) ───────────────────
 
@@ -19,7 +20,9 @@ const EBOOK_MARKER = /^\s*={2,}\s*EBOOK\s*\d*\s*[:\-–—]?\s*(.+?)\s*={2,}\s*$
 
 const AD_BRIEF_MARKER = /^\s*={2,}\s*IMAGE\s*AD\s*\d*\s*[:\-–—]?\s*(.+?)\s*={2,}\s*$/i;
 
-export function extractAdBriefs(output: string): { title: string; brief: string }[] {
+export function extractAdBriefs(
+  output: string
+): { title: string; brief: string; caption: MetaCaption | null }[] {
   const briefs: { title: string; brief: string }[] = [];
   let current: { title: string; brief: string } | null = null;
   for (const line of output.split(/\r?\n/)) {
@@ -33,7 +36,16 @@ export function extractAdBriefs(output: string): { title: string; brief: string 
   }
   if (current) briefs.push(current);
   return briefs
-    .map((b) => ({ ...b, brief: b.brief.trim() }))
+    .map((b) => {
+      const captionMatch = /Caption\s*Meta\s*:?\s*\n([\s\S]*)$/i.exec(b.brief);
+      const caption = captionMatch
+        ? parseCaptionBlock(captionMatch[1])
+        : null;
+      const visualBrief = (
+        captionMatch ? b.brief.slice(0, captionMatch.index) : b.brief
+      ).trim();
+      return { title: b.title, brief: visualBrief, caption };
+    })
     .filter((b) => b.brief.length > 0);
 }
 

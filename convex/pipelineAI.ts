@@ -11,6 +11,7 @@ import {
   renderEbookPdf,
   splitEbooks,
 } from "./lib/ebookPdf";
+import { splitUgcScripts } from "./lib/ugc";
 import {
   callText,
   estimateModelCost,
@@ -56,7 +57,7 @@ Pilih 1 konsep paling kuat, lalu buat brief lengkap: positioning, unique value p
 Jawab dalam Bahasa Indonesia. Jangan ngasal — kalau gak punya data spesifik, akui aja dan kasih saran.`,
 
   reza: `Kamu adalah **Reza**, Copywriter di CAST/|FREE.
-Tugas kamu: bikin 5 script UGC, 5 image ad, dan caption Meta Ads.
+Tugas kamu: bikin 5 script UGC + 5 image ad — DAN caption Meta masing-masing (primary text + headline + description) yang sudah dipasangin per script/iklan.
 
 **Input dari Maya (Research Analyst):**
 {RESEARCH}
@@ -64,20 +65,32 @@ Tugas kamu: bikin 5 script UGC, 5 image ad, dan caption Meta Ads.
 Susun output dengan format PERSIS seperti ini:
 
 ## 5 Script UGC
-Tepat 5 script video UGC (30-60 detik), masing-masing:
-- **UGC n: [Judul]** — persona kreator, HOOK (3 detik pertama), BODY (masalah -> solusi -> benefit), CTA penutup. Tulis dialognya siap dibaca.
+Tepat 5 script video UGC (30-60 detik), masing-masing dalam satu section:
+===UGC 1: [Judul]===
+Persona: [siapa kreator UGC-nya]
+HOOK: [3 detik pertama]
+BODY: [masalah -> solusi -> benefit, dialog siap dibaca]
+CTA: [penutup]
+Caption Meta:
+Primary text: [copy utama iklan, 1-3 kalimat + emoji secukupnya]
+Headline: [maks 40 karakter, punchy]
+Description: [maks 30 karakter, pelengkap]
+
+(ulangi sampai ===UGC 5: ...===)
 
 ## Image Ads
 Tepat 5 brief image ad, masing-masing DIPISAH dengan marker persis seperti ini (satu marker per brief, di baris sendiri):
 ===IMAGE AD 1: [Judul singkat]===
 Deskripsi visual lengkap untuk AI image generator: komposisi, subjek, gaya, warna (pakai HEX dari BVI), teks overlay pendek bila perlu.
+Caption Meta:
+Primary text: [...]
+Headline: [...]
+Description: [...]
 
 (ulangi sampai ===IMAGE AD 5: ...===)
 
-## Caption Meta Ads
-1 caption iklan Meta (Facebook/Instagram): hook, body copy, emoji secukupnya, CTA, plus 5 hashtag relevan.
-
-Jawab dalam Bahasa Indonesia. Pastikan ada TEPAT 5 marker ===IMAGE AD n===.`,
+Aturan: TEPAT 5 marker ===UGC n=== dan TEPAT 5 marker ===IMAGE AD n===. Setiap section WAJIB punya blok "Caption Meta:" dengan ketiga baris itu.
+Jawab dalam Bahasa Indonesia.`,
 
   dimas: `Kamu adalah **Dimas**, Product Builder di CAST/|FREE.
 Tugas kamu: nulis TEPAT 3 ebook lengkap yang siap dijual sebagai PDF.
@@ -177,7 +190,13 @@ export function normalizeAgentIds(agentIds?: string[]): string[] {
 // We use a function declaration to break the cycle.
 function runAgentsHandler(
   ctx: any,
-  args: { topic: string; agentIds?: string[]; productId?: Id<"products"> }
+  args: {
+    topic: string;
+    agentIds?: string[];
+    productId?: Id<"products">;
+    /** Opt-in image generation (doc 08). Undefined = legacy behavior (on). */
+    generateImages?: boolean;
+  }
 ): Promise<
   | {
       ok: true;
@@ -190,7 +209,8 @@ function runAgentsHandler(
     }
   | { ok: false; error: string }
 > {
-  return (async (ctx, { topic, agentIds, productId }) => {
+  return (async (ctx, { topic, agentIds, productId, generateImages }) => {
+    const shouldGenerateImages = generateImages !== false;
     const rawUserId = await getAuthUserId(ctx);
     if (rawUserId === null) throw new Error("Not authenticated");
     const userId: Id<"users"> = rawUserId;
@@ -390,6 +410,8 @@ function runAgentsHandler(
     const saveTextArtifact = async (
       kind:
         | "bvi"
+        | "product_brief"
+        | "ugc_scripts"
         | "image_ad_brief"
         | "landing_page"
         | "kie_veo_sheet"
@@ -434,12 +456,39 @@ function runAgentsHandler(
       );
     }
 
-    // Reza — image ad briefs artifact + generate 5 ad images to Galeri
+    // Reza — UGC scripts + image ad briefs (each with paired Meta captions),
+    // then optionally generate the ad images.
     if (selectedAgents.includes("reza") && runningContext.COPY) {
       const briefs = extractAdBriefs(runningContext.COPY);
+      const ugcScripts = splitUgcScripts(runningContext.COPY);
+
+      if (ugcScripts.length > 0) {
+        const ugcDoc = ugcScripts
+          .map(
+            (s) =>
+              `===UGC: ${s.title}===\n\n${s.script}${
+                s.caption
+                  ? `\n\nCaption Meta:\nPrimary text: ${s.caption.primaryText}\nHeadline: ${s.caption.headline}\nDescription: ${s.caption.description}`
+                  : ""
+              }`
+          )
+          .join("\n\n---\n\n");
+        await saveTextArtifact(
+          "ugc_scripts",
+          "reza",
+          `[Reza] ${topic} — 5 Script UGC.md`,
+          ugcDoc
+        );
+      }
+
       if (briefs.length > 0) {
         const briefDoc = briefs
-          .map((b) => `===IMAGE AD: ${b.title}===\n\n${b.brief}`)
+          .map((b) => {
+            const captionText = b.caption
+              ? `\n\nCaption Meta:\nPrimary text: ${b.caption.primaryText}\nHeadline: ${b.caption.headline}\nDescription: ${b.caption.description}`
+              : "";
+            return `===IMAGE AD: ${b.title}===\n\n${b.brief}${captionText}`;
+          })
           .join("\n\n---\n\n");
         await saveTextArtifact(
           "image_ad_brief",
@@ -449,8 +498,9 @@ function runAgentsHandler(
         );
       }
 
-      const bviSnippet = (runningContext.RESEARCH ?? "").slice(-600);
-      for (const [i, brief] of briefs.slice(0, MAX_AD_IMAGES).entries()) {
+      if (shouldGenerateImages && briefs.length > 0) {
+        const bviSnippet = (runningContext.RESEARCH ?? "").slice(-600);
+        for (const [i, brief] of briefs.slice(0, MAX_AD_IMAGES).entries()) {
         try {
           const imagePrompt = `${brief.brief.slice(0, 900)}\n\nKonteks brand (BVI):\n${bviSnippet}\n\nRasio persegi, gaya iklan digital premium.`;
           const media = await generateImageBytes({
@@ -494,6 +544,7 @@ function runAgentsHandler(
           imagesSaved += 1;
         } catch {
           imagesFailed += 1;
+        }
         }
       }
     }
@@ -720,6 +771,7 @@ export const runAgents = action({
     topic: v.string(),
     agentIds: v.optional(v.array(v.string())),
     productId: v.optional(v.id("products")),
+    generateImages: v.optional(v.boolean()),
   },
   handler: runAgentsHandler,
 });

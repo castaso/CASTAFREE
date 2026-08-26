@@ -37,6 +37,7 @@ const ARTIFACT_META: Record<
 > = {
   bvi: { label: "Konsep & BVI", icon: FileText },
   product_brief: { label: "Produk Brief", icon: FileText },
+  ugc_scripts: { label: "Script UGC", icon: FileText },
   image_ad_brief: { label: "Brief Image Ads", icon: ImageIcon },
   ebook_pdf: { label: "Ebook PDF", icon: FileText },
   landing_page: { label: "Landing Page", icon: Globe },
