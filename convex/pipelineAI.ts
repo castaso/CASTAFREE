@@ -652,6 +652,7 @@ function runAgentsHandler(
             name: `[Reza] ${topic} — Image Ad ${i + 1}.png`,
             mimeType: media.mime ?? "image/png",
             size: buffer.length,
+            productId,
           });
 
           await ctx.runMutation(internal.usage.insertUsage, {
@@ -801,6 +802,7 @@ function runAgentsHandler(
               name: `[Bayu] ${topic} — Setting Image ${i + 1}.png`,
               mimeType,
               size: buffer.length,
+              productId,
             });
 
             // Public URL for downstream KIE/VEO references (doc 05).
@@ -1045,6 +1047,7 @@ export const renderVeo = action({
       name: `[Bayu] Veo Render ${Date.now()}.mp4`,
       mimeType: "video/mp4",
       size: buffer.length,
+      productId,
     });
     return { ok: true as const };
   },

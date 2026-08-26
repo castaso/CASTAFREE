@@ -45,6 +45,21 @@ export const save = mutation({
   },
 });
 
+export const listByProduct = query({
+  args: { productId: v.id("products") },
+  handler: async (ctx, { productId }) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) return [];
+    const product = await ctx.db.get(productId);
+    if (product === null || product.userId !== userId) return [];
+    return await ctx.db
+      .query("gallery")
+      .withIndex("by_product", (q) => q.eq("productId", productId))
+      .order("desc")
+      .collect();
+  },
+});
+
 // Internal insert used by actions (e.g. the AI pipeline) that already hold
 // a storageId from ctx.storage.store() and an authenticated userId.
 export const saveInternal = internalMutation({
@@ -54,6 +69,7 @@ export const saveInternal = internalMutation({
     name: v.string(),
     mimeType: v.string(),
     size: v.number(),
+    productId: v.optional(v.id("products")),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("gallery", {
@@ -62,6 +78,7 @@ export const saveInternal = internalMutation({
       name: args.name,
       mimeType: args.mimeType,
       size: args.size,
+      productId: args.productId,
       createdAt: Date.now(),
     });
   },

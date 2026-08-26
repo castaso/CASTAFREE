@@ -126,8 +126,11 @@ export default defineSchema({
     name: v.string(),
     mimeType: v.string(),
     size: v.number(),
+    productId: v.optional(v.id("products")),
     createdAt: v.number(),
-  }).index("by_user", ["userId", "createdAt"]),
+  })
+    .index("by_user", ["userId", "createdAt"])
+    .index("by_product", ["productId"]),
   concepts: defineTable({
     userId: v.id("users"),
     topic: v.string(),

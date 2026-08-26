@@ -57,6 +57,10 @@ export function ProductDetailPage() {
     api.artifacts.listByProduct,
     product ? { productId: product._id } : "skip"
   );
+  const productImages = useQuery(
+    api.gallery.listByProduct,
+    product ? { productId: product._id } : "skip"
+  );
 
   if (product === undefined) {
     return (
@@ -138,7 +142,11 @@ export function ProductDetailPage() {
               </div>
             </div>
           ) : (
-            <WorkbenchTabs grouped={grouped} artifacts={artifacts} />
+            <WorkbenchTabs
+              grouped={grouped}
+              artifacts={artifacts}
+              galleryImages={productImages ?? []}
+            />
           )}
         </CardContent>
       </Card>
@@ -186,20 +194,41 @@ function groupArtifacts(artifacts: Artifact[]): Map<string, Artifact[]> {
 function WorkbenchTabs({
   grouped,
   artifacts,
+  galleryImages,
 }: {
   grouped: Map<string, Artifact[]>;
   artifacts: Artifact[];
+  galleryImages: Doc<"gallery">[];
 }) {
   const [activeTab, setActiveTab] = useState<string>("all");
 
+  // Generated images bound to this product (doc 14: "prompt + gambar").
+  const imagesFor = (label: string): Doc<"gallery">[] => {
+    if (label === "Setting Images") {
+      return galleryImages.filter((g) => g.name.startsWith("[Bayu]"));
+    }
+    if (label === "Script & Image Ads") {
+      return galleryImages.filter(
+        (g) => !g.name.startsWith("[Bayu]") && g.mimeType.startsWith("image/")
+      );
+    }
+    return [];
+  };
+
   // Only groups that actually have files get a tab; "Semua" is always there.
   const availableGroups = ARTIFACT_GROUPS.filter(
-    (group) => (grouped.get(group.label)?.length ?? 0) > 0
+    (group) =>
+      (grouped.get(group.label)?.length ?? 0) > 0 ||
+      imagesFor(group.label).length > 0
   );
   const visibleGroups =
     activeTab === "all"
       ? availableGroups
       : availableGroups.filter((g) => g.label === activeTab);
+
+  const totalFiles =
+    artifacts.length +
+    galleryImages.length;
 
   return (
     <div>
@@ -214,10 +243,12 @@ function WorkbenchTabs({
               : "bg-muted text-ink-2 hover:text-ink"
           )}
         >
-          Semua ({artifacts.length})
+          Semua ({totalFiles})
         </button>
         {availableGroups.map((group) => {
-          const count = grouped.get(group.label)?.length ?? 0;
+          const count =
+            (grouped.get(group.label)?.length ?? 0) +
+            imagesFor(group.label).length;
           return (
             <button
               key={group.label}
@@ -244,17 +275,41 @@ function WorkbenchTabs({
         <div className="space-y-5">
           {visibleGroups.map((group) => {
             const items = grouped.get(group.label) ?? [];
+            const images = imagesFor(group.label);
             return (
               <div key={group.label}>
                 <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-3">
                   <FileText className="h-3.5 w-3.5" />
-                  {group.label} ({items.length})
+                  {group.label} ({items.length + images.length})
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  {items.map((artifact) => (
-                    <ArtifactChip key={artifact._id} artifact={artifact} />
-                  ))}
-                </div>
+                {items.length > 0 && (
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    {items.map((artifact) => (
+                      <ArtifactChip key={artifact._id} artifact={artifact} />
+                    ))}
+                  </div>
+                )}
+                {images.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+                    {images.map((image) => (
+                      <a
+                        key={image._id}
+                        href={`/api/storage/${image.storageId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={`Buka ${image.name}`}
+                        className="overflow-hidden rounded-lg border border-border-d bg-app transition-all hover:border-[#FAA61A]"
+                      >
+                        <img
+                          src={`/api/storage/${image.storageId}`}
+                          alt={image.name}
+                          loading="lazy"
+                          className="h-24 w-full object-cover"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
