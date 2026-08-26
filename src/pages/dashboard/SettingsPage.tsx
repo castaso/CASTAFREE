@@ -100,6 +100,7 @@ type ProviderStatus = {
   provider: string;
   maskedKey: string;
   projectUrl?: string;
+  bucket?: string;
   status: "unverified" | "ok" | "error";
   lastError?: string;
 };
@@ -118,6 +119,7 @@ export function SettingsPage() {
 
   const [draftKeys, setDraftKeys] = useState<Record<string, string>>({});
   const [draftUrls, setDraftUrls] = useState<Record<string, string>>({});
+  const [draftBuckets, setDraftBuckets] = useState<Record<string, string>>({});
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [busyProvider, setBusyProvider] = useState<string | null>(null);
 
@@ -132,15 +134,13 @@ export function SettingsPage() {
       return;
     }
     if (!key && needsUrl && !statusMap.get(provider)?.projectUrl) return;
-    if (key && !needsUrl && !draftUrls[provider]) {
-      // simple save path
-    }
     setBusyProvider(provider);
     try {
       await saveKey({
         provider: provider as never,
         key: key ?? "",
         projectUrl: draftUrls[provider] || undefined,
+        bucket: draftBuckets[provider]?.trim() || undefined,
       });
       showToast("API key disimpan. Jangan share ke siapa pun ya 🔐", "success");
       setDraftKeys((prev) => ({ ...prev, [provider]: "" }));
@@ -434,18 +434,32 @@ export function SettingsPage() {
 
                   <div className="mt-3 space-y-2">
                     {provider.needsProjectUrl && (
-                      <input
-                        type="url"
-                        value={draftUrls[provider.id] ?? status?.projectUrl ?? ""}
-                        onChange={(e) =>
-                          setDraftUrls((prev) => ({
-                            ...prev,
-                            [provider.id]: e.target.value,
-                          }))
-                        }
-                        placeholder="https://xxxx.supabase.co"
-                        className="w-full rounded-lg border border-border-d bg-surface px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
-                      />
+                      <>
+                        <input
+                          type="url"
+                          value={draftUrls[provider.id] ?? status?.projectUrl ?? ""}
+                          onChange={(e) =>
+                            setDraftUrls((prev) => ({
+                              ...prev,
+                              [provider.id]: e.target.value,
+                            }))
+                          }
+                          placeholder="https://xxxx.supabase.co"
+                          className="w-full rounded-lg border border-border-d bg-surface px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
+                        />
+                        <input
+                          type="text"
+                          value={draftBuckets[provider.id] ?? status?.bucket ?? ""}
+                          onChange={(e) =>
+                            setDraftBuckets((prev) => ({
+                              ...prev,
+                              [provider.id]: e.target.value,
+                            }))
+                          }
+                          placeholder="Nama bucket publik (mis. ld-images, default castafree)"
+                          className="w-full rounded-lg border border-border-d bg-surface px-3 py-2 font-mono text-sm text-ink focus:border-brand focus:outline-none"
+                        />
+                      </>
                     )}
                     <div className="flex flex-wrap items-center gap-2">
                       <input

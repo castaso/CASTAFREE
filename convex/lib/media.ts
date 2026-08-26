@@ -222,17 +222,24 @@ export async function generateVeoVideo(opts: {
   kieKey: string;
   prompt: string;
   aspectRatio?: "16:9" | "9:16";
+  /** Optional public image URL used as visual reference (image-to-video). */
+  imageUrl?: string;
   timeoutMs?: number;
 }): Promise<MediaResult> {
   try {
+    const body: Record<string, unknown> = {
+      prompt: opts.prompt,
+      model: KIE_VIDEO_MODEL,
+      aspect_ratio: opts.aspectRatio ?? "16:9",
+    };
+    if (opts.imageUrl) {
+      // Per docs.kie.ai: providing imageUrls switches the task to
+      // image-to-video (the image guides the generated motion).
+      body.imageUrls = [opts.imageUrl];
+    }
     const created = await kieFetchJson(opts.kieKey, KIE_VEO_GENERATE, {
       method: "POST",
-      body: JSON.stringify({
-        prompt: opts.prompt,
-        model: KIE_VIDEO_MODEL,
-        aspect_ratio: opts.aspectRatio ?? "16:9",
-        generationType: "TEXT_2_VIDEO",
-      }),
+      body: JSON.stringify(body),
     });
     const taskId = created.data?.taskId;
     if (!taskId) throw new Error("KIE gak ngembaliin taskId video.");

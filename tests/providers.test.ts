@@ -8,6 +8,10 @@ import {
 } from "../convex/lib/llm";
 import { veoStatusToState, extractKieResultUrl } from "../convex/lib/media";
 import {
+  sanitizeBucketName,
+  DEFAULT_BUCKET,
+} from "../convex/lib/supabaseStorage";
+import {
   extractPexelsQueries,
   injectPexelsPhotos,
 } from "../convex/lib/pexels";
@@ -132,4 +136,13 @@ test("parseCompetitorAds defensively maps several payload shapes", () => {
   expect(shaped[0].pageName).toBe("Toko A");
   expect(shaped[1].cta).toBe("Shop Now");
   expect(parseCompetitorAds({})).toEqual([]);
+});
+
+// ── Supabase bucket names ───────────────────────────────────────────────────
+
+test("sanitizeBucketName keeps doc-style custom names and defaults sensibly", () => {
+  expect(sanitizeBucketName("ld-images")).toBe("ld-images");
+  expect(sanitizeBucketName("My Bucket Name!")).toBe("my-bucket-name");
+  expect(sanitizeBucketName("   ")).toBe(DEFAULT_BUCKET);
+  expect(sanitizeBucketName("")).toBe(DEFAULT_BUCKET);
 });

@@ -97,6 +97,7 @@ export default defineSchema({
     agentId: v.string(),
     kind: v.union(
       v.literal("bvi"),
+      v.literal("product_brief"),
       v.literal("image_ad_brief"),
       v.literal("ebook_pdf"),
       v.literal("landing_page"),
@@ -130,7 +131,15 @@ export default defineSchema({
     targetAudience: v.string(),
     format: v.string(),
     price: v.string(),
+    usp: v.optional(v.string()),
+    avatar: v.optional(v.string()),
     rawText: v.string(),
+    // Research-form context captured at run time
+    targetMarket: v.optional(v.string()),
+    priceTier: v.optional(v.string()),
+    founderAngle: v.optional(v.string()),
+    productType: v.optional(v.union(v.literal("digital"), v.literal("fisik"))),
+    depth: v.optional(v.string()),
     status: v.union(
       v.literal("proposed"),
       v.literal("approved"),
@@ -169,7 +178,9 @@ export default defineSchema({
       v.literal("supabase")
     ),
     key: v.string(),
-    meta: v.optional(v.object({ projectUrl: v.optional(v.string()) })),
+    meta: v.optional(
+      v.object({ projectUrl: v.optional(v.string()), bucket: v.optional(v.string()) })
+    ),
     status: v.union(
       v.literal("unverified"),
       v.literal("ok"),

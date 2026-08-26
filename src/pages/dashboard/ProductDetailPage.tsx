@@ -23,6 +23,7 @@ type Product = Doc<"products">;
 type Artifact = Doc<"artifacts">;
 
 const ARTIFACT_GROUPS: { kinds: string[]; label: string }[] = [
+  { kinds: ["product_brief"], label: "Produk Brief" },
   { kinds: ["bvi"], label: "Konsep & BVI" },
   { kinds: ["image_ad_brief"], label: "Script & Image Ads" },
   { kinds: ["ebook_pdf"], label: "Ebook PDF" },

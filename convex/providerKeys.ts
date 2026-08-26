@@ -4,6 +4,7 @@ import { action, internalQuery, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { maskKey } from "./lib/llm";
+import { sanitizeBucketName } from "./lib/supabaseStorage";
 import {
   KIE_BASE,
   SCRAPE_CREATORS_BASE,
@@ -40,8 +41,9 @@ export const saveKey = mutation({
     provider: providerValidator,
     key: v.string(),
     projectUrl: v.optional(v.string()),
+    bucket: v.optional(v.string()),
   },
-  handler: async (ctx, { provider, key, projectUrl }) => {
+  handler: async (ctx, { provider, key, projectUrl, bucket }) => {
     const userId = await getAuthUserId(ctx);
     if (userId === null) throw new ConvexError("Not authenticated");
     const trimmed = key.trim();
@@ -54,10 +56,17 @@ export const saveKey = mutation({
       )
       .first();
 
-    const meta =
-      provider === "supabase" && projectUrl
-        ? { projectUrl: projectUrl.replace(/\/+$/, "") }
-        : existing?.meta;
+    let meta = existing?.meta;
+    if (provider === "supabase") {
+      meta = {
+        projectUrl:
+          (projectUrl ?? existing?.meta?.projectUrl)?.replace(/\/+$/, "") ??
+          undefined,
+        bucket: sanitizeBucketName(
+          bucket ?? existing?.meta?.bucket ?? "castafree"
+        ),
+      };
+    }
 
     if (existing) {
       await ctx.db.patch(existing._id, {
@@ -112,6 +121,7 @@ export const listStatuses = query({
       provider: row.provider,
       maskedKey: maskKey(row.key),
       projectUrl: row.meta?.projectUrl,
+      bucket: row.meta?.bucket,
       status: row.status,
       lastError: row.lastError,
       lastCheckedAt: row.lastCheckedAt,

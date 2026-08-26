@@ -667,6 +667,7 @@ function runAgentsHandler(
 
     // Optional: mirror final artifacts to Supabase for public hosting.
     if (supabaseRow?.meta?.projectUrl) {
+      const bucket = supabaseRow.meta?.bucket ?? "castafree";
       for (const saved of savedArtifacts) {
         try {
           const blob = await ctx.storage.get(saved.storageId);
@@ -677,6 +678,7 @@ function runAgentsHandler(
           const publicUrl = await uploadPublic({
             projectUrl: supabaseRow.meta.projectUrl,
             serviceKey: supabaseRow.key,
+            bucket,
             path,
             bytes,
             mimeType: saved.mimeType,
@@ -767,11 +769,25 @@ export const renderVeo = action({
       return { ok: false as const, error: "Gak nemu prompt VEO di dalam sheet." };
     }
 
-    const video = await generateVeoVideo({
+    // Doc 05 hint: reuse a hosted public image as the Veo visual reference
+    // when one is available (image-to-video).
+    const referenceUrl =
+      artifacts.find((a) => a.publicUrl)?.publicUrl ?? undefined;
+
+    let video = await generateVeoVideo({
       kieKey: kieRow.key,
       prompt: scenePrompt.slice(0, 900),
       aspectRatio: "9:16",
+      imageUrl: referenceUrl,
     });
+    if (!video.ok && referenceUrl) {
+      // Retry text-only once — some prompts don't suit image-to-video.
+      video = await generateVeoVideo({
+        kieKey: kieRow.key,
+        prompt: scenePrompt.slice(0, 900),
+        aspectRatio: "9:16",
+      });
+    }
     if (!video.ok || !video.bytes) {
       return { ok: false as const, error: video.error ?? "Render Veo gagal." };
     }
