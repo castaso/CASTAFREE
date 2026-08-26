@@ -85,6 +85,26 @@ export default defineSchema({
   })
     .index("by_run", ["runId", "step"])
     .index("by_user", ["userId"]),
+  artifacts: defineTable({
+    userId: v.id("users"),
+    runId: v.optional(v.id("pipelineRuns")),
+    agentId: v.string(),
+    kind: v.union(
+      v.literal("bvi"),
+      v.literal("image_ad_brief"),
+      v.literal("ebook_pdf"),
+      v.literal("landing_page"),
+      v.literal("kie_veo_sheet"),
+      v.literal("scalev_pack")
+    ),
+    name: v.string(),
+    mimeType: v.string(),
+    storageId: v.id("_storage"),
+    size: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId", "createdAt"])
+    .index("by_run", ["runId"]),
   gallery: defineTable({
     userId: v.id("users"),
     storageId: v.id("_storage"),

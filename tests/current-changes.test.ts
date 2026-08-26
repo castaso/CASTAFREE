@@ -75,9 +75,38 @@ test("shipped schema.ts records imagesSaved/imagesFailed on pipelineRuns", () =>
   expect(src).toContain("imagesFailed: v.optional(v.number())");
 });
 
-test("shipped PipelinePage.tsx surfaces image results to the user", () => {
+test("shipped PipelinePage.tsx surfaces image + artifact results to the user", () => {
   const src = readFileSync("src/pages/dashboard/PipelinePage.tsx", "utf8");
-  expect(src).toContain("gambar masuk Galeri");
+  expect(src).toContain("gambar AI masuk Galeri");
   expect(src).toContain("Buka Galeri");
   expect(src).toContain("run.imagesSaved");
+  // Aspirational deliverables: artifacts panel on completed runs
+  expect(src).toContain("api.artifacts.listByRun");
+  expect(src).toContain("Hasil &amp; File Siap Pakai");
+});
+
+test("shipped schema.ts stores per-run AI artifacts (BVI, ebooks, landing page, KIE/VEO, Scalev)", () => {
+  const src = readFileSync("convex/schema.ts", "utf8");
+  expect(src).toContain("artifacts: defineTable");
+  for (const kind of [
+    '"bvi"',
+    '"image_ad_brief"',
+    '"ebook_pdf"',
+    '"landing_page"',
+    '"kie_veo_sheet"',
+    '"scalev_pack"',
+  ]) {
+    expect(src).toContain(kind);
+  }
+});
+
+test("shipped pipelineAI.ts demands doc-exact deliverables from every agent", () => {
+  const src = readFileSync("convex/pipelineAI.ts", "utf8");
+  expect(src).toContain("Brand Visual Identity (BVI)");
+  expect(src).toContain("===IMAGE AD");
+  expect(src).toContain("===EBOOK");
+  expect(src).toContain("TEPAT 14 section");
+  expect(src).toContain("Setting Image KIE");
+  expect(src).toContain("internal.artifacts.saveInternal");
+  expect(src).toContain("internal.products.createInternal");
 });

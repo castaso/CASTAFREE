@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 
 export const SAMPLE_PRODUCTS = [
   {
@@ -76,6 +76,26 @@ export const create = mutation({
     if (userId === null) throw new Error("Not authenticated");
     const date = new Date().toISOString().slice(0, 10);
     return await ctx.db.insert("products", { userId, date, ...args });
+  },
+});
+
+// Internal insert used by actions (e.g. the AI pipeline's Scalev step) that
+// already resolved the owning userId.
+export const createInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    slug: v.string(),
+    name: v.string(),
+    status: v.union(
+      v.literal("published"),
+      v.literal("draft"),
+      v.literal("processing")
+    ),
+    agent: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const date = new Date().toISOString().slice(0, 10);
+    return await ctx.db.insert("products", { ...args, date });
   },
 });
 

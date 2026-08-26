@@ -13,7 +13,7 @@ export const AGENTS: Agent[] = [
     name: "Maya",
     role: "Research Analyst",
     color: "#8B5CF6",
-    description: "Riset pasar, niche, dan kompetitor dengan data terkini.",
+    description: "Riset & validasi pasar jadi 5 konsep produk + brief + brand guide (BVI).",
     status: "active",
   },
   {
@@ -21,7 +21,7 @@ export const AGENTS: Agent[] = [
     name: "Reza",
     role: "Copywriter",
     color: "#EF4444",
-    description: "Nulis copy iklan, email, dan konten yang bikin konversi.",
+    description: "5 script UGC, 5 image ad, dan caption Meta Ads siap tempel.",
     status: "active",
   },
   {
@@ -29,7 +29,7 @@ export const AGENTS: Agent[] = [
     name: "Dimas",
     role: "Product Builder",
     color: "#F97316",
-    description: "Ngebangun produk digital dari konsep sampai siap jual.",
+    description: "Nulis 3 ebook lengkap yang langsung ke-render jadi PDF siap jual.",
     status: "active",
   },
   {
@@ -37,7 +37,7 @@ export const AGENTS: Agent[] = [
     name: "Sari",
     role: "Web Designer",
     color: "#16A34A",
-    description: "Desain landing page dan visual yang clean dan konversif.",
+    description: "Landing page 14-section dalam satu file HTML siap upload.",
     status: "active",
   },
   {
@@ -45,8 +45,8 @@ export const AGENTS: Agent[] = [
     name: "Bayu",
     role: "Video Producer",
     color: "#3B82F6",
-    description: "Produksi script dan storyboard video iklan & konten.",
-    status: "beta",
+    description: "Setting image KIE + prompt video VEO breakdown per scene.",
+    status: "active",
   },
 ];
 

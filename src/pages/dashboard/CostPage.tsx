@@ -17,11 +17,11 @@ const AGENT_COLORS: Record<string, string> = {
 };
 
 const ESTIMATES = [
-  { agent: "Maya", task: "Research & Analysis", range: "$0.50 - $2.00", status: "Termasuk", variant: "success" as const },
-  { agent: "Reza", task: "Copywriting", range: "$0.30 - $1.50", status: "Termasuk", variant: "success" as const },
-  { agent: "Dimas", task: "Product Building", range: "$0.80 - $3.00", status: "Termasuk", variant: "success" as const },
-  { agent: "Sari", task: "Web Design", range: "$0.60 - $2.50", status: "Termasuk", variant: "success" as const },
-  { agent: "Bayu", task: "Video Production", range: "$1.00 - $4.00", status: "Beta", variant: "info" as const },
+  { agent: "Maya", task: "Riset, 5 Konsep & BVI", range: "$0.50 - $2.00", status: "Termasuk", variant: "success" as const },
+  { agent: "Reza", task: "5 Script UGC + Image Ads + Meta", range: "$0.30 - $1.50", status: "Termasuk", variant: "success" as const },
+  { agent: "Dimas", task: "3 Ebook PDF Siap Jual", range: "$0.80 - $3.00", status: "Termasuk", variant: "success" as const },
+  { agent: "Sari", task: "Landing Page 14-Section", range: "$0.60 - $2.50", status: "Termasuk", variant: "success" as const },
+  { agent: "Bayu", task: "Setting KIE + Prompt VEO", range: "$1.00 - $4.00", status: "Termasuk", variant: "success" as const },
 ];
 
 function fmtCost(cost: number): string {

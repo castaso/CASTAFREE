@@ -14,15 +14,67 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
+  Download,
+  FileText,
+  Globe,
   ImageIcon,
   Loader2,
   Play,
   Sparkles,
+  Store,
+  Video,
   XCircle,
 } from "lucide-react";
 
 type PipelineRun = Doc<"pipelineRuns">;
 type PipelineTask = Doc<"pipelineTasks">;
+type Artifact = Doc<"artifacts">;
+
+const ARTIFACT_META: Record<
+  string,
+  { label: string; icon: typeof FileText }
+> = {
+  bvi: { label: "Konsep & BVI", icon: FileText },
+  image_ad_brief: { label: "Brief Image Ads", icon: ImageIcon },
+  ebook_pdf: { label: "Ebook PDF", icon: FileText },
+  landing_page: { label: "Landing Page", icon: Globe },
+  kie_veo_sheet: { label: "KIE & VEO", icon: Video },
+  scalev_pack: { label: "Scalev Pack", icon: Store },
+};
+
+function ArtifactChip({ artifact }: { artifact: Artifact }) {
+  const meta = ARTIFACT_META[artifact.kind] ?? {
+    label: artifact.kind,
+    icon: FileText,
+  };
+  const Icon = meta.icon;
+  const url = `/api/storage/${artifact.storageId}`;
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-lg border border-border-d bg-app px-2.5 py-1.5 text-xs font-medium text-ink">
+      <Icon className="h-3.5 w-3.5 shrink-0 text-[#FAA61A]" />
+      <span className="max-w-52 truncate">{artifact.name}</span>
+      {artifact.kind === "landing_page" && (
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded p-0.5 text-ink-3 transition-colors hover:text-[#FAA61A]"
+          title="Buka landing page di tab baru"
+        >
+          <Globe className="h-3.5 w-3.5" />
+        </a>
+      )}
+      <a
+        href={url}
+        download={artifact.name}
+        className="rounded p-0.5 text-ink-3 transition-colors hover:text-[#FAA61A]"
+        title={`Download ${meta.label}`}
+      >
+        <Download className="h-3.5 w-3.5" />
+      </a>
+    </span>
+  );
+}
 
 const AGENT_ORDER = ["maya", "reza", "dimas", "sari", "bayu"];
 
@@ -138,9 +190,13 @@ function TaskRow({ task, isExpanded, onToggle }: { task: PipelineTask; isExpande
   );
 }
 
-function RunCard({ run, tasks, onView }: { run: PipelineRun; tasks: PipelineTask[]; onView: () => void }) {
+function RunCard({ run, tasks }: { run: PipelineRun; tasks: PipelineTask[] }) {
   const [expanded, setExpanded] = useState(false);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
+  const artifacts = useQuery(
+    api.artifacts.listByRun,
+    expanded ? { runId: run._id } : "skip"
+  );
 
   return (
     <Card className="overflow-hidden">
@@ -198,6 +254,31 @@ function RunCard({ run, tasks, onView }: { run: PipelineRun; tasks: PipelineTask
                 />
               ))
             )}
+
+            {run.status === "completed" && (
+              <div className="border-t border-border-d bg-app/50 px-5 py-4">
+                <p className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-3">
+                  <FileText className="h-3.5 w-3.5" />
+                  Hasil &amp; File Siap Pakai
+                </p>
+                {artifacts === undefined ? (
+                  <div className="flex items-center gap-2 py-2 text-sm text-ink-3">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Loading file...
+                  </div>
+                ) : artifacts.length === 0 ? (
+                  <p className="py-1 text-sm text-ink-3">
+                    Gak ada file tersimpan untuk run ini.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {artifacts.map((artifact) => (
+                      <ArtifactChip key={artifact._id} artifact={artifact} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </CardContent>
@@ -213,7 +294,7 @@ export function PipelinePage() {
   const [topic, setTopic] = useState("");
   const [running, setRunning] = useState(false);
   const [activeRunId, setActiveRunId] = useState<Id<"pipelineRuns"> | null>(null);
-  const [lastImages, setLastImages] = useState<number | null>(null);
+  const [lastSummary, setLastSummary] = useState<{ images: number; artifacts: number } | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Poll for the active run's tasks every 3s while running
@@ -244,11 +325,14 @@ export function PipelinePage() {
       const result = await runPipeline({ topic: trimmed });
       if (result.ok) {
         setActiveRunId(result.runId);
-        setLastImages(result.imagesSaved ?? 0);
+        setLastSummary({
+          images: result.imagesSaved ?? 0,
+          artifacts: result.artifactsSaved ?? 0,
+        });
         showToast(
-          result.imagesSaved > 0
-            ? `Pipeline selesai! ${result.imagesSaved} gambar masuk Galeri 🎉`
-            : "Pipeline selesai! 🎉",
+          `Pipeline selesai! ${result.artifactsSaved} file siap pakai${
+            result.imagesSaved > 0 ? ` + ${result.imagesSaved} gambar di Galeri` : ""
+          } 🎉`,
           "success"
         );
       } else {
@@ -273,7 +357,8 @@ export function PipelinePage() {
         <h1 className="font-display text-3xl font-black text-ink">Pipeline AI</h1>
         <div className="mt-2 h-1 w-12 rounded-full bg-gradient-to-r from-[#303188] to-[#FAA61A]" />
         <p className="mt-3 text-ink-2">
-          Jalanin 5 agent AI sekaligus — dari riset sampai storyboard — dalam satu pipeline.
+          Jalanin 5 agent AI sekaligus — riset, copy, ebook PDF, landing page,
+          dan iklan — dalam satu pipeline.
         </p>
       </header>
 
@@ -335,37 +420,46 @@ export function PipelinePage() {
           {isAnyRunning && (
             <div className="mt-4 flex items-center gap-2 rounded-lg bg-info-bg p-3 text-sm text-info">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Pipeline lagi jalan — 5 agent dipanggil berurutan, lalu 2 gambar
-              AI dibuat &amp; disimpan otomatis ke Galeri. Ini bisa makan waktu
-              1-3 menit.
+              Pipeline lagi jalan — 5 agent bikin konsep &amp; BVI, 5 script UGC,
+              3 ebook, landing page 14 section, setting KIE + prompt VEO, lalu
+              image ad dibuat otomatis. Ini bisa makan waktu 3-6 menit.
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* ── Images saved to Galeri ───────────────────────── */}
-      {lastImages !== null && lastImages > 0 && (
+      {/* ── Run summary: files & images ──────────────────── */}
+      {lastSummary !== null && (lastSummary.artifacts > 0 || lastSummary.images > 0) && (
         <Card className="mb-8 border-success/25 bg-success-bg">
           <CardContent className="flex flex-col items-center justify-between gap-3 p-4 sm:flex-row">
             <div className="flex items-center gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/15 text-success">
-                <ImageIcon className="h-5 w-5" />
+                <FileText className="h-5 w-5" />
               </span>
               <div>
                 <p className="text-sm font-semibold text-ink">
-                  {lastImages} gambar AI masuk Galeri 🎨
+                  {lastSummary.artifacts} file siap jual +{" "}
+                  {lastSummary.images} gambar AI masuk Galeri 🎨
                 </p>
                 <p className="text-xs text-ink-2">
-                  Sampul produk &amp; hero landing page otomatis disimpan — cek
-                  di Galeri.
+                  BVI, 3 ebook PDF, landing page, KIE/VEO, dan export pack
+                  Scalev — buka run di Riwayat untuk download. Produk juga
+                  udah didaftarin otomatis.
                 </p>
               </div>
             </div>
-            <Link to="/dashboard/gallery">
-              <Button size="sm" variant="outline" className="shrink-0">
-                Buka Galeri
-              </Button>
-            </Link>
+            <div className="flex shrink-0 gap-2">
+              <Link to="/dashboard/products">
+                <Button size="sm" variant="outline">
+                  Lihat Produk
+                </Button>
+              </Link>
+              <Link to="/dashboard/gallery">
+                <Button size="sm" variant="outline">
+                  Buka Galeri
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -434,12 +528,7 @@ export function PipelinePage() {
         </Card>
       ) : (
         <div className="space-y-3">              {runs.map((run: PipelineRun) => (
-            <RunCard
-              key={run._id}
-              run={run}
-              tasks={[]}
-              onView={() => {}}
-            />
+            <RunCard key={run._id} run={run} tasks={[]} />
           ))}
         </div>
       )}
