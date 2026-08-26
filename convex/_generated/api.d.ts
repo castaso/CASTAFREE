@@ -18,6 +18,8 @@ import type * as mentorAI from "../mentorAI.js";
 import type * as pipelineAI from "../pipelineAI.js";
 import type * as pipelineData from "../pipelineData.js";
 import type * as products from "../products.js";
+import type * as providerData from "../providerData.js";
+import type * as providerKeys from "../providerKeys.js";
 import type * as researchAI from "../researchAI.js";
 import type * as researchData from "../researchData.js";
 import type * as turso from "../turso.js";
@@ -42,6 +44,8 @@ declare const fullApi: ApiFromModules<{
   pipelineAI: typeof pipelineAI;
   pipelineData: typeof pipelineData;
   products: typeof products;
+  providerData: typeof providerData;
+  providerKeys: typeof providerKeys;
   researchAI: typeof researchAI;
   researchData: typeof researchData;
   turso: typeof turso;

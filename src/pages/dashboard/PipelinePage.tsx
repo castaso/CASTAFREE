@@ -18,6 +18,7 @@ import {
   FileText,
   Globe,
   ImageIcon,
+  Link2,
   Loader2,
   Play,
   Sparkles,
@@ -63,6 +64,16 @@ export function ArtifactChip({ artifact }: { artifact: Artifact }) {
         >
           <Globe className="h-3.5 w-3.5" />
         </a>
+      )}
+      {artifact.publicUrl && (
+        <button
+          type="button"
+          onClick={() => void navigator.clipboard.writeText(artifact.publicUrl!)}
+          title="Copy link publik (Supabase)"
+          className="rounded p-0.5 text-ink-3 transition-colors hover:text-[#FAA61A]"
+        >
+          <Link2 className="h-3.5 w-3.5" />
+        </button>
       )}
       <a
         href={url}

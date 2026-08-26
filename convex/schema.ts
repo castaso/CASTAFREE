@@ -107,6 +107,7 @@ export default defineSchema({
     mimeType: v.string(),
     storageId: v.id("_storage"),
     size: v.number(),
+    publicUrl: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_user", ["userId", "createdAt"])
@@ -144,6 +145,39 @@ export default defineSchema({
   userSettings: defineTable({
     userId: v.id("users"),
     model: v.string(),
+    textEngine: v.optional(
+      v.union(
+        v.literal("gemini"),
+        v.literal("groq"),
+        v.literal("openai"),
+        v.literal("anthropic")
+      )
+    ),
+    imageEngine: v.optional(v.literal("kie")),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
+  providerKeys: defineTable({
+    userId: v.id("users"),
+    provider: v.union(
+      v.literal("gemini"),
+      v.literal("groq"),
+      v.literal("openai"),
+      v.literal("anthropic"),
+      v.literal("kie"),
+      v.literal("pexels"),
+      v.literal("scrape_creators"),
+      v.literal("supabase")
+    ),
+    key: v.string(),
+    meta: v.optional(v.object({ projectUrl: v.optional(v.string()) })),
+    status: v.union(
+      v.literal("unverified"),
+      v.literal("ok"),
+      v.literal("error")
+    ),
+    lastError: v.optional(v.string()),
+    lastCheckedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user_provider", ["userId", "provider"]),
 });

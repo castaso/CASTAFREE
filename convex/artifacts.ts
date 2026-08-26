@@ -41,8 +41,7 @@ export const listMine = query({
   },
 });
 
-export const saveInternal = internalMutation({
-  args: {
+export const saveInternal = internalMutation({  args: {
     userId: v.id("users"),
     runId: v.optional(v.id("pipelineRuns")),
     agentId: v.string(),
@@ -64,5 +63,16 @@ export const saveInternal = internalMutation({
       ...args,
       createdAt: Date.now(),
     });
+  },
+});
+
+// Used by the optional Supabase mirror after a successful public upload.
+export const setPublicUrl = internalMutation({
+  args: {
+    id: v.id("artifacts"),
+    publicUrl: v.string(),
+  },
+  handler: async (ctx, { id, publicUrl }) => {
+    await ctx.db.patch(id, { publicUrl });
   },
 });

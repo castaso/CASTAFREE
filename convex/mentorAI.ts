@@ -1,32 +1,15 @@
 "use node";
 
 import { v } from "convex/values";
-import OpenAI from "openai";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { action } from "./_generated/server";
-import { internal } from "./_generated/api";
-
-const MODEL = "gpt-4o-mini";
-
-// OpenAI pricing in USD per 1M tokens (gpt-4o-mini standard rates).
-const PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
-  "gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
-};
-
-function estimateCost(
-  model: string,
-  usage: {
-    prompt_tokens?: number | null;
-    completion_tokens?: number | null;
-  }
-): number {
-  const p = PRICING[model] ?? { inputPer1M: 0, outputPer1M: 0 };
-  return (
-    ((usage.prompt_tokens ?? 0) * p.inputPer1M +
-      (usage.completion_tokens ?? 0) * p.outputPer1M) /
-    1_000_000
-  );
-}
+import { api, internal } from "./_generated/api";
+import {
+  callText,
+  estimateModelCost,
+  type EngineCredential,
+  type TextEngine,
+} from "./lib/llm";
 
 const SYSTEM_PROMPT = `Kamu adalah "AI Mentor" dari CAST/|FREE — mentor AI yang ramah, santai tapi tetap profesional, dan selalu jawab dalam Bahasa Indonesia (gaul-nya dikit, kayak temen yang ngerti banget).
 
@@ -90,52 +73,57 @@ export const askMentor = action({
       .reverse()
       .map((m) => ({ role: m.role, content: m.content }));
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      const content =
-        "Belum ada OpenAI API key yang terhubung. Tambahin `OPENAI_API_KEY` di tab API Keys biar aku bisa jawab pertanyaan lu! 🙏";
-      await ctx.runMutation(internal.mentor.insertMessage, {
-        chatId,
-        userId,
-        role: "assistant",
-        content,
-        createdAt: Date.now(),
-      });
-      return { ok: false as const, content };
-    }
+    const runConfig = await ctx.runQuery(api.userSettings.resolveRunConfig);
+    const keyRows = await ctx.runQuery(internal.providerKeys.getAllPlain, {
+      userId,
+    });
+    const credentials: EngineCredential[] = keyRows
+      .filter((row) =>
+        ["gemini", "groq", "openai", "anthropic"].includes(row.provider)
+      )
+      .map((row) => ({
+        engine: row.provider as TextEngine,
+        apiKey: row.key,
+      }));
 
     let content: string;
     let ok: boolean;
     try {
-      const openai = new OpenAI({ apiKey });
-      const completion = await openai.chat.completions.create({
-        model: MODEL,
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...history],
+      const call = await callText({
+        chosenEngine: runConfig.textEngine,
+        modelOverride: runConfig.model || undefined,
+        credentials,
+        hasEnvOpenAI: Boolean(process.env.OPENAI_API_KEY),
+        system: SYSTEM_PROMPT,
+        user:
+          "Riwayat percakapan:\n" +
+          history.map((h) => `[${h.role}] ${h.content}`).join("\n") +
+          "\n\nLanjutin percakapan di atas — jawab pesan terakhir user.",
         temperature: 0.7,
       });
-      content =
-        completion.choices[0]?.message?.content?.trim() ||
-        "Maaf, aku lagi blank. Coba tanya ulang ya 😅";
+      if (!call.ok) throw new Error(call.error ?? "Semua engine teks gagal.");
+      content = call.text || "Maaf, aku lagi blank. Coba tanya ulang ya 😅";
       ok = true;
 
       // Record real usage/cost for the Biaya page.
-      const usage = completion.usage;
-      if (usage) {
-        await ctx.runMutation(internal.usage.insertUsage, {
-          userId,
-          source: "AI Mentor",
-          model: MODEL,
-          promptTokens: usage.prompt_tokens ?? 0,
-          completionTokens: usage.completion_tokens ?? 0,
-          totalTokens: usage.total_tokens ?? 0,
-          cost: estimateCost(MODEL, usage),
-          createdAt: Date.now(),
-        });
-      }
+      await ctx.runMutation(internal.usage.insertUsage, {
+        userId,
+        source: `AI Mentor (${call.engine})`,
+        model: call.model ?? "unknown",
+        promptTokens: call.promptTokens,
+        completionTokens: call.completionTokens,
+        totalTokens: call.promptTokens + call.completionTokens,
+        cost: estimateModelCost(
+          call.model ?? "",
+          call.promptTokens,
+          call.completionTokens
+        ),
+        createdAt: Date.now(),
+      });
     } catch (err) {
-      console.error("OpenAI error:", err);
+      console.error("Text engine error:", err);
       content =
-        "⚠️ Ada kendala pas manggil OpenAI. Cek API key-nya masih valid & saldonya cukup, terus coba lagi ya.";
+        "⚠️ Ada kendala pas manggil engine AI. Cek API key lu di Pengaturan (minimal satu engine valid), terus coba lagi ya.";
       ok = false;
     }
 

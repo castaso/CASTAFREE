@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAction, useQuery } from "convex/react";
-import { api } from "@generated/api";
-import type { Doc } from "@generated/dataModel";
+import { api } from "@generated/api";import type { Doc } from "@generated/dataModel";
 import {
   ArrowLeft,
   Boxes,
@@ -192,12 +191,30 @@ function groupArtifacts(artifacts: Artifact[]): Map<string, Artifact[]> {
 
 function AgentRunner({ product }: { product: Product }) {
   const runAgents = useAction(api.pipelineAI.runAgents);
+  const renderVeo = useAction(api.pipelineAI.renderVeo);
   const showToast = useToast();
 
   const [selected, setSelected] = useState<string[]>(
     AGENTS.map((agent) => agent.id)
   );
   const [running, setRunning] = useState(false);
+  const [renderingVeo, setRenderingVeo] = useState(false);
+
+  async function onRenderVeo() {
+    setRenderingVeo(true);
+    try {
+      const result = await renderVeo({ productId: product._id });
+      if (result.ok) {
+        showToast("Video Veo masuk Galeri 🎬", "success");
+      } else {
+        showToast(result.error ?? "Render Veo gagal.", "error");
+      }
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Render Veo gagal.", "error");
+    } finally {
+      setRenderingVeo(false);
+    }
+  }
 
   const toggle = (agentId: string) => {
     setSelected((prev) =>
@@ -317,6 +334,26 @@ function AgentRunner({ product }: { product: Product }) {
               </button>
             );
           })}
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border-d pt-4">
+          <p className="text-xs text-ink-2">
+            Punya sheet KIE &amp; VEO? Render Scene 1 langsung jadi video
+            (butuh KIE key di Pengaturan).
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={renderingVeo}
+            onClick={() => void onRenderVeo()}
+          >
+            {renderingVeo ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="mr-1.5 h-4 w-4" />
+            )}
+            {renderingVeo ? "Rendering... (1-4 menit)" : "Render Video VEO"}
+          </Button>
         </div>
 
         {running && (

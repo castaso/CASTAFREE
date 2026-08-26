@@ -1,40 +1,34 @@
 "use node";
 
 import { v } from "convex/values";
-import OpenAI from "openai";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { action } from "./_generated/server";
 import { api, internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import {
   extractAdBriefs,
   extractHtml,
   renderEbookPdf,
   splitEbooks,
 } from "./lib/ebookPdf";
+import {
+  callText,
+  estimateModelCost,
+  type EngineCredential,
+  type TextEngine,
+} from "./lib/llm";
+import { generateImageBytes, generateVeoVideo } from "./lib/media";
+import {
+  extractPexelsQueries,
+  injectPexelsPhotos,
+  searchPhotos,
+} from "./lib/pexels";
+import { fetchCompetitorContext } from "./lib/scrapeCreators";
+import { uploadPublic } from "./lib/supabaseStorage";
 
-const IMAGE_MODEL = "gpt-image-1";
-const IMAGE_COST_PER_IMAGE = 0.042; // USD per 1024x1024 (medium quality)
+const IMAGE_COST_PER_IMAGE = 0.042; // USD per gpt-image-1 1024x1024 (medium)
 const MAX_AD_IMAGES = 5;
 const MAX_EBOOKS = 3;
-
-const PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
-  "gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
-  "gpt-4.1-mini": { inputPer1M: 0.4, outputPer1M: 1.6 },
-  "gpt-4o": { inputPer1M: 2.5, outputPer1M: 10 },
-};
-
-function estimateCost(
-  model: string,
-  usage: { prompt_tokens?: number | null; completion_tokens?: number | null }
-): number {
-  const p = PRICING[model] ?? { inputPer1M: 0, outputPer1M: 0 };
-  return (
-    ((usage.prompt_tokens ?? 0) * p.inputPer1M +
-      (usage.completion_tokens ?? 0) * p.outputPer1M) /
-    1_000_000
-  );
-}
 
 const AGENT_PROMPTS: Record<string, string> = {
   maya: `Kamu adalah **Maya**, Research Analyst di CAST/|FREE.
@@ -124,6 +118,7 @@ Aturan output:
 3. File HTML harus lengkap & self-contained (<!DOCTYPE html>, inline <style>, responsive, tanpa library eksternal).
 4. WAJIB punya TEPAT 14 section berurutan: Hero, Problem, Solusi, Benefit, Fitur, Isi Produk, Cara Pakai, Testimoni, Harga, Bonus, Garansi, FAQ, CTA Final, Footer.
 5. Pakai warna & font dari BVI Maya, copy dari Reza, harga & isi dari Dimas. Copy dalam Bahasa Indonesia.
+6. Buat visual section: sisipkan komentar placeholder <!--PEXELS:[keyword dalam bahasa Inggris]--> di 3-5 titik (hero, benefit, testimoni) sebagai penanda tempat foto stok nanti.
 
 Jangan potong kode — tulis HTML sampai selesai.`,
 
@@ -205,13 +200,33 @@ function runAgentsHandler(
       return { ok: false as const, error: "Pilih minimal satu agent." };
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return { ok: false as const, error: "OPENAI_API_KEY belum diset." };
-    }
+    // ── Resolve engines & keys (BYOK with auto-fallback) ──
+    const runConfig = await ctx.runQuery(api.userSettings.resolveRunConfig);
+    const keyRows: Doc<"providerKeys">[] = await ctx.runQuery(
+      internal.providerKeys.getAllPlain,
+      { userId }
+    );
+    const credentials: EngineCredential[] = keyRows
+      .filter((row) =>
+        ["gemini", "groq", "openai", "anthropic"].includes(row.provider)
+      )
+      .map((row) => ({
+        engine: row.provider as TextEngine,
+        apiKey: row.key,
+      }));
+    const hasEnvOpenAI = Boolean(process.env.OPENAI_API_KEY);
 
-    const model = await ctx.runQuery(api.userSettings.resolveModel);
-    const openai = new OpenAI({ apiKey });
+    const kieKeyRow =
+      keyRows.find((row) => row.provider === "kie") ?? null;
+    const kieKey = kieKeyRow?.key;
+    const pexelsKey = keyRows.find((row) => row.provider === "pexels")?.key ?? null;
+    const scrapeKey =
+      keyRows.find((row) => row.provider === "scrape_creators")?.key ?? null;
+    const supabaseRow =
+      keyRows.find(
+        (row) => row.provider === "supabase" && row.meta?.projectUrl
+      ) ?? null;
+
     const now = Date.now();
 
     // Product context: name + outputs from the latest completed run.
@@ -261,12 +276,20 @@ function runAgentsHandler(
       const priorChain = previousId
         ? runningContext[`${previousId.toUpperCase()}_OUTPUT`] ?? ""
         : "";
-      const inputText =
+      let inputText =
         i === 0
           ? product
             ? `Lanjut kerjain produk "${productName}" untuk topik: ${topic}`
             : topic
           : `Lanjutin pipeline untuk topik: "${topic}"\n\nHasil agent sebelumnya:\n${priorChain}`;
+
+      // Optional competitor-ad research before Maya (Scrape Creators).
+      if (id === "maya" && scrapeKey) {
+        const competitorBlock = await fetchCompetitorContext(scrapeKey, topic);
+        if (competitorBlock) {
+          inputText = `${competitorBlock}\n${inputText}`;
+        }
+      }
 
       const taskId = await ctx.runMutation(internal.pipelineData.createTask, {
         runId,
@@ -277,7 +300,7 @@ function runAgentsHandler(
         input: inputText,
         status: "running",
         createdAt: Date.now(),
-        model,
+        model: runConfig.model || undefined,
       });
 
       let systemPrompt = AGENT_PROMPTS[id] ?? "";
@@ -286,22 +309,26 @@ function runAgentsHandler(
       }
 
       try {
-        const completion = await openai.chat.completions.create({
-          model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: inputText },
-          ],
+        const call = await callText({
+          chosenEngine: runConfig.textEngine,
+          modelOverride: runConfig.model || undefined,
+          credentials,
+          hasEnvOpenAI,
+          system: systemPrompt,
+          user: inputText,
           temperature: 0.7,
         });
-
-        const output =
-          completion.choices[0]?.message?.content?.trim() ?? "—";
-
-        const usage = completion.usage;
-        const promptTokens = usage?.prompt_tokens ?? 0;
-        const completionTokens = usage?.completion_tokens ?? 0;
-        const cost = estimateCost(model, usage ?? {});
+        if (!call.ok) {
+          throw new Error(call.error ?? "Semua engine teks gagal.");
+        }
+        const output = call.text;
+        const promptTokens = call.promptTokens;
+        const completionTokens = call.completionTokens;
+        const cost = estimateModelCost(
+          call.model ?? "",
+          promptTokens,
+          completionTokens
+        );
 
         await ctx.runMutation(internal.pipelineData.completeTask, {
           taskId,
@@ -314,8 +341,8 @@ function runAgentsHandler(
 
         await ctx.runMutation(internal.usage.insertUsage, {
           userId,
-          source: `Pipeline: ${name}`,
-          model,
+          source: `Pipeline: ${name}${call.fromEnv ? " (server key)" : ` (${call.engine})`}`,
+          model: call.model ?? "unknown",
           promptTokens,
           completionTokens,
           totalTokens: promptTokens + completionTokens,
@@ -353,6 +380,12 @@ function runAgentsHandler(
     let artifactsFailed = 0;
     let imagesSaved = 0;
     let imagesFailed = 0;
+    const savedArtifacts: {
+      artifactId: Id<"artifacts">;
+      storageId: Id<"_storage">;
+      name: string;
+      mimeType: string;
+    }[] = [];
 
     const saveTextArtifact = async (
       kind:
@@ -371,7 +404,7 @@ function runAgentsHandler(
         const storageId = await ctx.storage.store(
           new Blob([buffer], { type: mimeType })
         );
-        await ctx.runMutation(internal.artifacts.saveInternal, {
+        const artifactId = await ctx.runMutation(internal.artifacts.saveInternal, {
           userId,
           runId,
           productId,
@@ -382,6 +415,7 @@ function runAgentsHandler(
           storageId,
           size: buffer.length,
         });
+        savedArtifacts.push({ artifactId, storageId, name, mimeType });
         artifactsSaved += 1;
         return true;
       } catch {
@@ -418,38 +452,42 @@ function runAgentsHandler(
       const bviSnippet = (runningContext.RESEARCH ?? "").slice(-600);
       for (const [i, brief] of briefs.slice(0, MAX_AD_IMAGES).entries()) {
         try {
-          const res = await openai.images.generate({
-            model: IMAGE_MODEL,
-            prompt: `${brief.brief.slice(0, 900)}\n\nKonteks brand (BVI):\n${bviSnippet}\n\nRasio persegi, gaya iklan digital premium.`,
-            n: 1,
-            size: "1024x1024",
-            response_format: "b64_json",
-            output_format: "png",
+          const imagePrompt = `${brief.brief.slice(0, 900)}\n\nKonteks brand (BVI):\n${bviSnippet}\n\nRasio persegi, gaya iklan digital premium.`;
+          const media = await generateImageBytes({
+            kieKey: kieKey ?? undefined,
+            openaiApiKey:
+              credentials.find((c) => c.engine === "openai")?.apiKey ??
+              process.env.OPENAI_API_KEY,
+            prompt: imagePrompt,
           });
-          const b64 = res.data?.[0]?.b64_json;
-          if (!b64) throw new Error("OpenAI tidak mengembalikan data gambar.");
+          if (!media.ok || !media.bytes) {
+            throw new Error(media.error ?? "Generate gambar gagal.");
+          }
 
-          const buffer = Buffer.from(b64, "base64");
+          const buffer = Buffer.from(media.bytes);
           const storageId = await ctx.storage.store(
-            new Blob([buffer], { type: "image/png" })
+            new Blob([buffer], { type: media.mime ?? "image/png" })
           );
 
           await ctx.runMutation(internal.gallery.saveInternal, {
             userId,
             storageId,
             name: `[Reza] ${topic} — Image Ad ${i + 1}.png`,
-            mimeType: "image/png",
+            mimeType: media.mime ?? "image/png",
             size: buffer.length,
           });
 
           await ctx.runMutation(internal.usage.insertUsage, {
             userId,
-            source: "Pipeline: Image Ad AI",
-            model: IMAGE_MODEL,
+            source:
+              media.source === "kie"
+                ? "Pipeline: Image Ad AI (KIE)"
+                : "Pipeline: Image Ad AI",
+            model: media.source === "kie" ? "kie/nano-banana" : "gpt-image-1",
             promptTokens: 0,
             completionTokens: 0,
             totalTokens: 0,
-            cost: IMAGE_COST_PER_IMAGE,
+            cost: media.source === "kie" ? 0 : IMAGE_COST_PER_IMAGE,
             createdAt: Date.now(),
           });
 
@@ -472,7 +510,7 @@ function runAgentsHandler(
           const safeTitle =
             ebook.title.replace(/[^\w\s-]/g, "").trim().slice(0, 60) ||
             `Ebook ${i + 1}`;
-          await ctx.runMutation(internal.artifacts.saveInternal, {
+          const artifactId = await ctx.runMutation(internal.artifacts.saveInternal, {
             userId,
             runId,
             productId,
@@ -483,6 +521,12 @@ function runAgentsHandler(
             storageId,
             size: pdfBytes.length,
           });
+          savedArtifacts.push({
+            artifactId,
+            storageId,
+            name: `[Dimas] ${safeTitle}.pdf`,
+            mimeType: "application/pdf",
+          });
           artifactsSaved += 1;
         } catch {
           artifactsFailed += 1;
@@ -490,9 +534,21 @@ function runAgentsHandler(
       }
     }
 
-    // Sari — landing page 14-section (HTML self-contained)
+    // Sari — landing page 14-section (HTML self-contained) + Pexels photos
     if (selectedAgents.includes("sari") && runningContext.DESIGN) {
-      const html = extractHtml(runningContext.DESIGN);
+      let html = extractHtml(runningContext.DESIGN);
+      if (html && pexelsKey) {
+        try {
+          const queries = extractPexelsQueries(html).slice(0, 6);
+          const photosByQuery: Record<string, Awaited<ReturnType<typeof searchPhotos>>> = {};
+          for (const query of queries) {
+            photosByQuery[query] = await searchPhotos(pexelsKey, query, 4);
+          }
+          html = injectPexelsPhotos(html, photosByQuery).html;
+        } catch {
+          // Pexels is optional — keep the un-injected HTML.
+        }
+      }
       if (html) {
         await saveTextArtifact(
           "landing_page",
@@ -519,6 +575,37 @@ function runAgentsHandler(
         `[Bayu] ${topic} — Setting KIE & Prompt VEO.md`,
         runningContext.BAYU_OUTPUT
       );
+
+      // Auto-render the first scene via KIE Veo when configured.
+      if (kieKey) {
+        try {
+          const scenePrompt =
+            /Prompt VEO[^:]*:\s*([\s\S]{20,900}?)(?=\n\s*-\s|\n#|\n##|$)/i.exec(
+              runningContext.BAYU_OUTPUT
+            )?.[1]?.trim() ?? `${topic} — cinematic product ad, premium look`;
+          const video = await generateVeoVideo({
+            kieKey,
+            prompt: scenePrompt.slice(0, 900),
+            aspectRatio: "9:16",
+          });
+          if (video.ok && video.bytes) {
+            const buffer = Buffer.from(video.bytes);
+            const storageId = await ctx.storage.store(
+              new Blob([buffer], { type: "video/mp4" })
+            );
+            await ctx.runMutation(internal.gallery.saveInternal, {
+              userId,
+              storageId,
+              name: `[Bayu] ${topic} — Video VEO Scene 1.mp4`,
+              mimeType: "video/mp4",
+              size: buffer.length,
+            });
+            imagesSaved += 1; // surfaced as "media saved to Galeri"
+          }
+        } catch {
+          // Optional — sheet alone is still a complete deliverable.
+        }
+      }
     }
 
     // Scalev stub — daftarkan produk + export pack (full pipeline only)
@@ -578,6 +665,32 @@ function runAgentsHandler(
       }
     }
 
+    // Optional: mirror final artifacts to Supabase for public hosting.
+    if (supabaseRow?.meta?.projectUrl) {
+      for (const saved of savedArtifacts) {
+        try {
+          const blob = await ctx.storage.get(saved.storageId);
+          if (!blob) continue;
+          const bytes = new Uint8Array(await blob.arrayBuffer());
+          const safeName = saved.name.replace(/[^\w.\-]+/g, "_");
+          const path = `${userId}/${runId}/${safeName}`;
+          const publicUrl = await uploadPublic({
+            projectUrl: supabaseRow.meta.projectUrl,
+            serviceKey: supabaseRow.key,
+            path,
+            bytes,
+            mimeType: saved.mimeType,
+          });
+          await ctx.runMutation(internal.artifacts.setPublicUrl, {
+            id: saved.artifactId,
+            publicUrl,
+          });
+        } catch {
+          // Best-effort only — Convex storage remains the source of truth.
+        }
+      }
+    }
+
     await ctx.runMutation(internal.pipelineData.completeRun, {
       runId,
       completedAt: Date.now(),
@@ -613,4 +726,67 @@ export const runAgents = action({
 export const runPipeline = action({
   args: { topic: v.string() },
   handler: runAgentsHandler,
+});
+
+/**
+ * Render Scene 1 of a product's latest Bayu KIE/VEO sheet via KIE Veo.
+ * Saves the MP4 to the Galeri. Requires a KIE key in Settings.
+ */
+export const renderVeo = action({
+  args: { productId: v.id("products") },
+  handler: async (ctx, { productId }) => {
+    const rawUserId = await getAuthUserId(ctx);
+    if (rawUserId === null) throw new Error("Not authenticated");
+    const userId: Id<"users"> = rawUserId;
+
+    const kieRow = await ctx.runQuery(internal.providerKeys.getPlainKey, {
+      userId,
+      provider: "kie",
+    });
+    if (!kieRow) {
+      return { ok: false as const, error: "KIE key belum diisi di Settings." };
+    }
+
+    const artifacts = await ctx.runQuery(api.artifacts.listByProduct, {
+      productId,
+    });
+    const sheet = artifacts
+      .filter((a) => a.kind === "kie_veo_sheet")
+      .sort((a, b) => b.createdAt - a.createdAt)[0];
+    if (!sheet) {
+      return { ok: false as const, error: "Belum ada sheet KIE/VEO buat produk ini." };
+    }
+
+    const url = await ctx.storage.getUrl(sheet.storageId);
+    if (!url) return { ok: false as const, error: "File sheet gak bisa dibaca." };
+    const text = await (await fetch(url)).text();
+    const scenePrompt =
+      /Prompt VEO[^:]*:\s*([\s\S]{20,900}?)(?=\n\s*-\s|\n#|\n##|$)/i.exec(text)
+        ?.[1]?.trim();
+    if (!scenePrompt) {
+      return { ok: false as const, error: "Gak nemu prompt VEO di dalam sheet." };
+    }
+
+    const video = await generateVeoVideo({
+      kieKey: kieRow.key,
+      prompt: scenePrompt.slice(0, 900),
+      aspectRatio: "9:16",
+    });
+    if (!video.ok || !video.bytes) {
+      return { ok: false as const, error: video.error ?? "Render Veo gagal." };
+    }
+
+    const buffer = Buffer.from(video.bytes);
+    const storageId = await ctx.storage.store(
+      new Blob([buffer], { type: "video/mp4" })
+    );
+    await ctx.runMutation(internal.gallery.saveInternal, {
+      userId,
+      storageId,
+      name: `[Bayu] Veo Render ${Date.now()}.mp4`,
+      mimeType: "video/mp4",
+      size: buffer.length,
+    });
+    return { ok: true as const };
+  },
 });

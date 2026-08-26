@@ -1,9 +1,15 @@
 import { ConvexError, v } from "convex/values";
-import OpenAI from "openai";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { action, mutation } from "./_generated/server";
 import { internal, api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import {
+  callText,
+  estimateModelCost,
+  type EngineCredential,
+  type TextEngine,
+} from "./lib/llm";
+import { fetchCompetitorContext } from "./lib/scrapeCreators";
 
 const CONCEPT_MARKER = /^\s*={2,}\s*KONSEP\s*(\d+)\s*[:\-–—]?\s*(.+?)\s*={2,}\s*$/i;
 
@@ -96,26 +102,43 @@ export const runResearch = action({
     if (rawUserId === null) throw new ConvexError("Not authenticated");
     const userId: Id<"users"> = rawUserId;
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return { ok: false as const, error: "OPENAI_API_KEY belum diset." };
+    const runConfig = await ctx.runQuery(api.userSettings.resolveRunConfig);
+    const keyRows = await ctx.runQuery(internal.providerKeys.getAllPlain, {
+      userId,
+    });
+    const credentials: EngineCredential[] = keyRows
+      .filter((row) =>
+        ["gemini", "groq", "openai", "anthropic"].includes(row.provider)
+      )
+      .map((row) => ({
+        engine: row.provider as TextEngine,
+        apiKey: row.key,
+      }));
+    const scrapeKey =
+      keyRows.find((row) => row.provider === "scrape_creators")?.key ?? null;
+
+    let userInput = `Topik produk: ${topic}`;
+    const competitorBlock = await fetchCompetitorContext(scrapeKey, topic);
+    if (competitorBlock) {
+      userInput = `${competitorBlock}\n${userInput}`;
     }
 
-    const model = await ctx.runQuery(api.userSettings.resolveModel);
-    const openai = new OpenAI({ apiKey });
-
-    const completion = await openai.chat.completions.create({
-      model,
-      messages: [
-        { role: "system", content: RESEARCH_PROMPT },
-        { role: "user", content: `Topik produk: ${topic}` },
-      ],
+    const call = await callText({
+      chosenEngine: runConfig.textEngine,
+      modelOverride: runConfig.model || undefined,
+      credentials,
+      hasEnvOpenAI: Boolean(process.env.OPENAI_API_KEY),
+      system: RESEARCH_PROMPT,
+      user: userInput,
       temperature: 0.7,
     });
-    const output = completion.choices[0]?.message?.content?.trim() ?? "";
+    if (!call.ok) {
+      return { ok: false as const, error: call.error ?? "Semua engine teks gagal." };
+    }
+    const output = call.text;
+    const promptTokens = call.promptTokens;
+    const completionTokens = call.completionTokens;
 
-    const promptTokens = completion.usage?.prompt_tokens ?? 0;
-    const completionTokens = completion.usage?.completion_tokens ?? 0;
     const parsed = parseConcepts(output);
     if (parsed.length === 0) {
       return {
@@ -146,34 +169,17 @@ export const runResearch = action({
     await ctx.runMutation(internal.usage.insertUsage, {
       userId,
       source: "Riset: Maya",
-      model,
+      model: call.model ?? "unknown",
       promptTokens,
       completionTokens,
       totalTokens: promptTokens + completionTokens,
-      cost: estimateCost(model, promptTokens, completionTokens),
+      cost: estimateModelCost(call.model ?? "", promptTokens, completionTokens),
       createdAt: now,
     });
 
     return { ok: true as const, conceptIds: ids };
   },
 });
-
-const PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
-  "gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
-  "gpt-4.1-mini": { inputPer1M: 0.4, outputPer1M: 1.6 },
-  "gpt-4o": { inputPer1M: 2.5, outputPer1M: 10 },
-};
-
-export function estimateCost(
-  model: string,
-  promptTokens: number,
-  completionTokens: number
-): number {
-  const p = PRICING[model] ?? { inputPer1M: 0, outputPer1M: 0 };
-  return (
-    (promptTokens * p.inputPer1M + completionTokens * p.outputPer1M) / 1_000_000
-  );
-}
 
 // ── concept lifecycle ───────────────────────────────────────────────────────
 

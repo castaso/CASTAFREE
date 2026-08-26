@@ -43,15 +43,18 @@ test("image generation cost constant matches gpt-image-1 rate", () => {
 
 test("shipped pipelineAI.ts still carries the expected pricing + image constants", () => {
   const src = readFileSync("convex/pipelineAI.ts", "utf8");
-  expect(src).toContain('"gpt-4o-mini"');
-  expect(src).toContain("inputPer1M: 0.15");
-  expect(src).toContain("outputPer1M: 0.6");
   expect(src).toContain("IMAGE_COST_PER_IMAGE = 0.042");
-  expect(src).toContain('"gpt-image-1"');
-  expect(src).toContain('response_format: "b64_json"');
-  expect(src).toContain('size: "1024x1024"');
   // Images must be auto-saved to the gallery via the internal mutation
   expect(src).toContain("internal.gallery.saveInternal");
+  // Multi-engine BYOK: text calls route through the unified LLM layer
+  expect(src).toContain("callText");
+});
+
+test("unified llm layer keeps multi-provider pricing and fallback chain", () => {
+  const src = readFileSync("convex/lib/llm.ts", "utf8");
+  expect(src).toContain('"gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.6 }');
+  expect(src).toContain('groq: "openai/gpt-oss-120b"');
+  expect(src).toContain('gemini: "gemini-flash-latest"');
 });
 
 test("shipped GalleryPage.tsx keeps MIME filter mapping, 10MB cap, storage URL format", () => {
