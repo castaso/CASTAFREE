@@ -15,6 +15,8 @@ export const createRun = internalMutation({
     createdAt: v.number(),
     productId: v.optional(v.id("products")),
     agentIds: v.optional(v.array(v.string())),
+    referenceBook: v.optional(v.string()),
+    angleOverride: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("pipelineRuns", {
@@ -24,6 +26,8 @@ export const createRun = internalMutation({
       createdAt: args.createdAt,
       productId: args.productId,
       agentIds: args.agentIds,
+      referenceBook: args.referenceBook,
+      angleOverride: args.angleOverride,
     });
   },
 });

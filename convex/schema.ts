@@ -59,6 +59,8 @@ export default defineSchema({
     ),
     productId: v.optional(v.id("products")),
     agentIds: v.optional(v.array(v.string())),
+    referenceBook: v.optional(v.string()),
+    angleOverride: v.optional(v.string()),
     imagesSaved: v.optional(v.number()),
     imagesFailed: v.optional(v.number()),
     createdAt: v.number(),

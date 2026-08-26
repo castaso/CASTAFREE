@@ -1,10 +1,35 @@
 import { test, expect } from "bun:test";
 
 import {
+  buildDimasContext,
+  normalizeAgentIds,
+} from "../convex/pipelineAI";
+import {
   parseCaptionBlock,
   splitUgcScripts,
 } from "../convex/lib/ugc";
 import { extractAdBriefs } from "../convex/lib/ebookPdf";
+
+// ── buildDimasContext (doc 09 step 2) ───────────────────────────────────────
+
+test("buildDimasContext returns null when both overrides are empty", () => {
+  expect(buildDimasContext()).toBeNull();
+  expect(buildDimasContext("", "   ")).toBeNull();
+});
+
+test("buildDimasContext includes labeled lines for filled inputs", () => {
+  const ctx = buildDimasContext("Atomic Habits", "Fokus pada pemula sibuk");
+  expect(ctx).toContain("Reference book");
+  expect(ctx).toContain("Atomic Habits");
+  expect(ctx).toContain("Angle WAJIB dipakai");
+  expect(ctx).toContain("Fokus pada pemula sibuk");
+});
+
+test("buildDimasContext handles only one field set and trims input", () => {
+  const ctx = buildDimasContext(undefined, "  angle x  ");
+  expect(ctx).not.toContain("Reference book");
+  expect(ctx).toContain("angle x");
+});
 
 const REZA_OUTPUT = [
   "## 5 Script UGC",

@@ -209,6 +209,8 @@ function AgentRunner({ product }: { product: Product }) {
   const [running, setRunning] = useState(false);
   const [renderingVeo, setRenderingVeo] = useState(false);
   const [generateImages, setGenerateImages] = useState(false);
+  const [referenceBook, setReferenceBook] = useState("");
+  const [topicAngleOverride, setTopicAngleOverride] = useState("");
 
   // Live progress (doc 08 "output streaming"): while a run executes we
   // subscribe to its tasks; Convex reactivity pushes status changes.
@@ -275,12 +277,16 @@ function AgentRunner({ product }: { product: Product }) {
         agentIds: ids,
         productId: product._id,
         generateImages,
+        referenceBook: referenceBook.trim() || undefined,
+        topicAngleOverride: topicAngleOverride.trim() || undefined,
       });
       if (result.ok) {
         showToast(
           `Selesai! ${result.artifactsSaved} file baru tersimpan di Workbench 🎉`,
           "success"
         );
+        setReferenceBook("");
+        setTopicAngleOverride("");
       } else {
         showToast(result.error ?? "Run gagal.", "error");
       }
@@ -372,6 +378,40 @@ function AgentRunner({ product }: { product: Product }) {
               </button>
             );
           })}
+
+          {/* ── Dimas overrides (doc 09 step 2) ────────────── */}
+          {selected.includes("dimas") && (
+            <div className="col-span-full grid gap-3 rounded-lg border border-border-d bg-app p-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-2">
+                  Reference book{" "}
+                  <span className="font-normal normal-case text-ink-3">(opsional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={referenceBook}
+                  onChange={(e) => setReferenceBook(e.target.value)}
+                  disabled={running}
+                  placeholder="Buku/referensi buat struktur & isi ebook"
+                  className="w-full rounded-lg border border-border-d bg-surface px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-2">
+                  Topic angle override{" "}
+                  <span className="font-normal normal-case text-ink-3">(opsional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={topicAngleOverride}
+                  onChange={(e) => setTopicAngleOverride(e.target.value)}
+                  disabled={running}
+                  placeholder="Paksa angle tertentu, abaikan analisis sendiri"
+                  className="w-full rounded-lg border border-border-d bg-surface px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
+                />
+              </div>
+            </div>
+          )}
 
           {/* ── Image-gen opt-in (doc 08) ──────────────────── */}
           {selected.includes("reza") && (

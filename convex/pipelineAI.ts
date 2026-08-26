@@ -186,6 +186,27 @@ export function normalizeAgentIds(agentIds?: string[]): string[] {
   return AGENT_ORDER.filter((id) => set.has(id));
 }
 
+/**
+ * Pure helper: build Dimas' optional user-override context block
+ * (doc 09 step 2). Returns null when both inputs are empty (unit-tested).
+ */
+export function buildDimasContext(
+  referenceBook?: string,
+  angleOverride?: string
+): string | null {
+  const book = referenceBook?.trim();
+  const angle = angleOverride?.trim();
+  if (!book && !angle) return null;
+  const lines = ["Konteks tambahan dari user:"];
+  if (book) {
+    lines.push(`Reference book (pakai sebagai sumber/inspirasi struktur & isi): ${book}`);
+  }
+  if (angle) {
+    lines.push(`Angle WAJIB dipakai (override analisis sendiri): ${angle}`);
+  }
+  return lines.join("\n");
+}
+
 // The recursive type inference from ctx.runMutation inside a loop confuses TS.
 // We use a function declaration to break the cycle.
 function runAgentsHandler(
@@ -196,6 +217,9 @@ function runAgentsHandler(
     productId?: Id<"products">;
     /** Opt-in image generation (doc 08). Undefined = legacy behavior (on). */
     generateImages?: boolean;
+    /** Doc 09 step 2: optional Dimas overrides. */
+    referenceBook?: string;
+    topicAngleOverride?: string;
   }
 ): Promise<
   | {
@@ -209,7 +233,14 @@ function runAgentsHandler(
     }
   | { ok: false; error: string }
 > {
-  return (async (ctx, { topic, agentIds, productId, generateImages }) => {
+  return (async (ctx, {
+    topic,
+    agentIds,
+    productId,
+    generateImages,
+    referenceBook,
+    topicAngleOverride,
+  }) => {
     const shouldGenerateImages = generateImages !== false;
     const rawUserId = await getAuthUserId(ctx);
     if (rawUserId === null) throw new Error("Not authenticated");
@@ -286,6 +317,8 @@ function runAgentsHandler(
       createdAt: now,
       productId,
       agentIds: selectedAgents,
+      referenceBook: referenceBook?.trim() || undefined,
+      angleOverride: topicAngleOverride?.trim() || undefined,
     });
 
     for (let i = 0; i < selectedAgents.length; i++) {
@@ -308,6 +341,17 @@ function runAgentsHandler(
         const competitorBlock = await fetchCompetitorContext(scrapeKey, topic);
         if (competitorBlock) {
           inputText = `${competitorBlock}\n${inputText}`;
+        }
+      }
+
+      // Doc 09 step 2: user overrides for Dimas.
+      if (id === "dimas") {
+        const dimasContext = buildDimasContext(
+          referenceBook,
+          topicAngleOverride
+        );
+        if (dimasContext) {
+          inputText = `${inputText}\n\n${dimasContext}`;
         }
       }
 
@@ -772,6 +816,8 @@ export const runAgents = action({
     agentIds: v.optional(v.array(v.string())),
     productId: v.optional(v.id("products")),
     generateImages: v.optional(v.boolean()),
+    referenceBook: v.optional(v.string()),
+    topicAngleOverride: v.optional(v.string()),
   },
   handler: runAgentsHandler,
 });
