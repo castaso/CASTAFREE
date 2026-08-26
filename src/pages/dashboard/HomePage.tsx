@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@generated/api";
@@ -15,6 +15,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/toast";
+import {
+  readActivationPrefill,
+  clearActivationPrefill,
+} from "@/lib/activationPrefill";
 
 export function HomePage() {
   const [email, setEmail] = useState("");
@@ -37,6 +41,18 @@ export function HomePage() {
 
   const license = licenses?.[0];
   const isLoading = licenses === undefined || products === undefined;
+
+  // Coming from /activate with an email-link prefill: fill the activation
+  // form automatically, then clear it so it doesn't linger in the session.
+  useEffect(() => {
+    if (license) return;
+    const prefill = readActivationPrefill();
+    if (prefill) {
+      setEmail(prefill.email);
+      setLicenseKey(prefill.key.toUpperCase());
+      clearActivationPrefill();
+    }
+  }, [license]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();

@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BrandMark } from "@/components/BrandMark";
 import { cn } from "@/lib/utils";
+import {
+  readActivationPrefill,
+  clearActivationPrefill,
+} from "@/lib/activationPrefill";
 
 type Mode = "signIn" | "signUp";
 
@@ -16,6 +20,7 @@ export function AuthPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
 
   const { signIn } = useAuthActions();
   const { isAuthenticated } = useConvexAuth();
@@ -24,6 +29,15 @@ export function AuthPage() {
 
   const returnTo =
     new URLSearchParams(location.search).get("returnTo") || "/dashboard";
+
+  // Coming from an activation email link: prefill the purchase email.
+  useEffect(() => {
+    const prefill = readActivationPrefill();
+    if (prefill?.email) {
+      setEmail(prefill.email);
+      setPrefilled(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -107,10 +121,16 @@ export function AuthPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="[email protected]"
+                  placeholder="nama@email.com"
                   className="pl-9"
                 />
               </div>
+              {prefilled && (
+                <p className="text-[11px] text-success">
+                  Email terisi otomatis dari link aktivasi — harus sama dengan
+                  email waktu beli.
+                </p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Password</Label>

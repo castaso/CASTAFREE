@@ -3,6 +3,7 @@ import { ToastProvider } from "@/components/toast";
 import { RequireAuth } from "@/components/RequireAuth";
 import { LandingPage } from "@/pages/LandingPage";
 import { AuthPage } from "@/pages/AuthPage";
+import { ActivatePage } from "@/pages/ActivatePage";
 import { DashboardPage } from "@/pages/DashboardPage";
 
 export default function App() {
@@ -12,6 +13,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/activate" element={<ActivatePage />} />
           <Route
             path="/dashboard/*"
             element={
