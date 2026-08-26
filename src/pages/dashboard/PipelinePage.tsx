@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useAction, useQuery } from "convex/react";
 import { Link } from "react-router-dom";
 import { api } from "@generated/api";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AGENTS, AGENT_COLORS } from "@/data/team";
+import { cn } from "@/lib/utils";
 import type { Doc, Id } from "@generated/dataModel";
 import {
   CheckCircle2,
@@ -30,6 +31,7 @@ import {
 type PipelineRun = Doc<"pipelineRuns">;
 type PipelineTask = Doc<"pipelineTasks">;
 type Artifact = Doc<"artifacts">;
+type ProductDoc = Doc<"products">;
 
 const ARTIFACT_META: Record<
   string,
@@ -302,47 +304,75 @@ export function RunCard({ run, tasks }: { run: PipelineRun; tasks: PipelineTask[
 
 export function PipelinePage() {
   const runs = useQuery(api.pipelineData.listRuns);
-  const runPipeline = useAction(api.pipelineAI.runPipeline);
+  const products = useQuery(api.products.list);
+  const runAgentsAction = useAction(api.pipelineAI.runAgents);
   const showToast = useToast();
 
+  type RunMode = "topic" | "product";
+  const [mode, setMode] = useState<RunMode>("topic");
   const [topic, setTopic] = useState("");
+  const [productId, setProductId] = useState<string>("");
+  const [selectedAgents, setSelectedAgents] = useState<string[]>(
+    AGENT_ORDER.slice()
+  );
   const [running, setRunning] = useState(false);
-  const [activeRunId, setActiveRunId] = useState<Id<"pipelineRuns"> | null>(null);
-  const [lastSummary, setLastSummary] = useState<{ images: number; artifacts: number } | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [lastSummary, setLastSummary] = useState<{ images: number; artifacts: number; productId: string | null } | null>(null);
 
-  // Poll for the active run's tasks every 3s while running
+  // Live stage progress (doc 12 step 3): the newest running run is ours
+  // while we're blocked on the action — Convex reactivity pushes task
+  // transitions without any polling.
+  const activeRun = running
+    ? (runs ?? []).find((r: PipelineRun) => r.status === "running") ?? null
+    : null;
   const activeTasks = useQuery(
     api.pipelineData.getTasksByRun,
-    activeRunId ? { runId: activeRunId } : "skip"
+    activeRun ? { runId: activeRun._id } : "skip"
   );
 
-  // Auto-poll while running
-  useEffect(() => {
-    if (running) {
-      pollRef.current = setInterval(() => {
-        // re-render triggers the useQuery to refetch
-        setActiveRunId((prev) => prev);
-      }, 3000);
-    }
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, [running]);
+  const toggleAgent = (id: string) => {
+    setSelectedAgents((prev) =>
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
+    );
+  };
 
   async function onRun() {
-    const trimmed = topic.trim();
-    if (!trimmed || running) return;
+    if (running || selectedAgents.length === 0) return;
     setRunning(true);
-    setActiveRunId(null);
     try {
-      const result = await runPipeline({ topic: trimmed });
-      if (result.ok) {
-        setActiveRunId(result.runId);
-        setLastSummary({
-          images: result.imagesSaved ?? 0,
-          artifacts: result.artifactsSaved ?? 0,
+      let result;
+      if (mode === "product") {
+        const product = (products ?? []).find(
+          (p: ProductDoc) => p._id === productId
+        );
+        if (!product) {
+          showToast("Pilih produk dulu ya.", "warning");
+          return;
+        }
+        result = await runAgentsAction({
+          topic: product.name,
+          agentIds: selectedAgents,
+          productId: product._id,
         });
+        if (result.ok) {
+          setLastSummary({
+            images: result.imagesSaved ?? 0,
+            artifacts: result.artifactsSaved ?? 0,
+            productId,
+          });
+        }
+      } else {
+        const trimmed = topic.trim();
+        if (!trimmed) return;
+        result = await runAgentsAction({ topic: trimmed, agentIds: selectedAgents });
+        if (result.ok) {
+          setLastSummary({
+            images: result.imagesSaved ?? 0,
+            artifacts: result.artifactsSaved ?? 0,
+            productId: null,
+          });
+        }
+      }
+      if (result.ok) {
         showToast(
           `Pipeline selesai! ${result.artifactsSaved} file siap pakai${
             result.imagesSaved > 0 ? ` + ${result.imagesSaved} gambar di Galeri` : ""
@@ -364,6 +394,10 @@ export function PipelinePage() {
   }
 
   const isAnyRunning = running || (runs ?? []).some((r: PipelineRun) => r.status === "running");
+  const canRun =
+    !isAnyRunning &&
+    selectedAgents.length > 0 &&
+    (mode === "product" ? Boolean(productId) : Boolean(topic.trim()));
 
   return (
     <div>
@@ -379,47 +413,123 @@ export function PipelinePage() {
       {/* ── Run Pipeline ────────────────────────────────── */}
       <Card className="mb-8">
         <CardContent className="p-6">
-          <div className="mb-6 flex items-center gap-4">
-            {AGENT_ORDER.map((id, i) => {
-              const agent = AGENTS.find((a) => a.id === id);
-              const color = AGENT_COLORS[id] ?? "#6B7280";
+          {/* Mode: new topic vs existing product (doc 12 step 2) */}
+          <div className="mb-5 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1 sm:max-w-md">
+            {(
+              [
+                { id: "topic", label: "Topik Baru" },
+                { id: "product", label: "Produk Existing" },
+              ] as const
+            ).map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setMode(m.id)}
+                disabled={isAnyRunning}
+                aria-pressed={mode === m.id}
+                className={cn(
+                  "rounded-md py-2 text-sm font-semibold transition-all",
+                  mode === m.id
+                    ? "bg-surface text-ink shadow-card"
+                    : "text-ink-2 hover:text-ink"
+                )}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Agent selection chips */}
+          <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            {AGENTS.map((agent) => {
+              const active = selectedAgents.includes(agent.id);
               return (
-                <div key={id} className="flex items-center gap-1">
-                  <span
-                    className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                    style={{ backgroundColor: color }}
-                    title={agent?.name}
-                  >
-                    {agent?.name?.charAt(0)}
-                  </span>
-                  {i < AGENT_ORDER.length - 1 && (
-                    <ChevronRight className="h-3 w-3 text-ink-3" />
+                <button
+                  key={agent.id}
+                  type="button"
+                  onClick={() => toggleAgent(agent.id)}
+                  disabled={isAnyRunning}
+                  aria-pressed={active}
+                  className={cn(
+                    "flex items-center gap-2 rounded-xl border p-2.5 text-left transition-all",
+                    active
+                      ? "border-[#FAA61A] bg-[#FAA61A]/10"
+                      : "border-border-d bg-app opacity-70 hover:opacity-100"
                   )}
-                </div>
+                >
+                  <span
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                    style={{ backgroundColor: agent.color }}
+                  >
+                    {agent.name.charAt(0)}
+                  </span>
+                  <span className="min-w-0">
+                    <span
+                      className="block text-xs font-bold"
+                      style={{ color: agent.color }}
+                    >
+                      {agent.name}
+                    </span>
+                    <span className="block truncate text-[10px] text-ink-3">
+                      {agent.role}
+                    </span>
+                  </span>
+                </button>
               );
             })}
           </div>
 
           <div className="flex items-end gap-3">
             <div className="flex-1">
-              <label
-                htmlFor="pipeline-topic"
-                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-2"
-              >
-                Topik produk
-              </label>
-              <Input
-                id="pipeline-topic"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="Contoh: ebook diet keto, kursus desain Canva, template landing page..."
-                disabled={isAnyRunning}
-                className="w-full"
-              />
+              {mode === "topic" ? (
+                <>
+                  <label
+                    htmlFor="pipeline-topic"
+                    className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-2"
+                  >
+                    Topik produk
+                  </label>
+                  <Input
+                    id="pipeline-topic"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder="Contoh: ebook diet keto, kursus desain Canva, template landing page..."
+                    disabled={isAnyRunning}
+                    className="w-full"
+                  />
+                </>
+              ) : (
+                <>
+                  <label
+                    htmlFor="pipeline-product"
+                    className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-2"
+                  >
+                    Pilih produk
+                  </label>
+                  <select
+                    id="pipeline-product"
+                    value={productId}
+                    onChange={(e) => setProductId(e.target.value)}
+                    disabled={isAnyRunning}
+                    className="h-10 w-full rounded-lg border border-border-d bg-app px-3 text-sm font-semibold text-ink outline-none transition-colors hover:border-[#FAA61A]"
+                  >
+                    <option value="">
+                      {(products ?? []).length === 0
+                        ? "Belum ada produk — bikin dulu di menu Riset/Produk"
+                        : "Pilih produk..."}
+                    </option>
+                    {(products ?? []).map((p: ProductDoc) => (
+                      <option key={p._id} value={p._id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
             </div>
             <Button
-              onClick={onRun}
-              disabled={!topic.trim() || isAnyRunning}
+              onClick={() => void onRun()}
+              disabled={!canRun}
               className="shrink-0"
             >
               {running ? (
@@ -430,13 +540,38 @@ export function PipelinePage() {
               {running ? "Memproses..." : "Jalankan"}
             </Button>
           </div>
+          {mode === "product" && (
+            <p className="mt-2 text-[11px] text-ink-3">
+              Hasil run otomatis nempel ke produk ini &amp; masuk Workbench-nya.
+            </p>
+          )}
+
+          {/* Live stage progress (doc 12 step 3) */}
+          {running && activeRun && (
+            <div className="mt-4 overflow-hidden rounded-xl border border-border-d">
+              {activeTasks === undefined || activeTasks.length === 0 ? (
+                <div className="flex items-center gap-2 px-4 py-4 text-sm text-info">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Nyiapin tahap pertama...
+                </div>
+              ) : (
+                activeTasks.map((task: PipelineTask) => (
+                  <TaskRow
+                    key={task._id}
+                    task={task}
+                    isExpanded={task.status === "completed"}
+                    onToggle={() => {}}
+                  />
+                ))
+              )}
+            </div>
+          )}
 
           {isAnyRunning && (
             <div className="mt-4 flex items-center gap-2 rounded-lg bg-info-bg p-3 text-sm text-info">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Pipeline lagi jalan — 5 agent bikin konsep &amp; BVI, 5 script UGC,
-              3 ebook, landing page 14 section, setting KIE + prompt VEO, lalu
-              image ad dibuat otomatis. Ini bisa makan waktu 3-6 menit.
+              Pipeline lagi jalan — pantau progress tiap tahap di atas. Bisa
+              makan waktu 1-6 menit tergantung jumlah agent.
             </div>
           )}
         </CardContent>
@@ -463,6 +598,13 @@ export function PipelinePage() {
               </div>
             </div>
             <div className="flex shrink-0 gap-2">
+              {lastSummary.productId && (
+                <Link to={`/dashboard/products/${lastSummary.productId}`}>
+                  <Button size="sm" variant="outline">
+                    Buka Produk
+                  </Button>
+                </Link>
+              )}
               <Link to="/dashboard/products">
                 <Button size="sm" variant="outline">
                   Lihat Produk
