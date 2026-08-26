@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/toast";
+import { cn } from "@/lib/utils";
 import { AGENTS } from "@/data/team";
 import {
   ArtifactChip,
@@ -136,25 +137,7 @@ export function ProductDetailPage() {
               </div>
             </div>
           ) : (
-            <div className="space-y-5">
-              {ARTIFACT_GROUPS.map((group) => {
-                const items = grouped.get(group.label) ?? [];
-                if (items.length === 0) return null;
-                return (
-                  <div key={group.label}>
-                    <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-3">
-                      <FileText className="h-3.5 w-3.5" />
-                      {group.label} ({items.length})
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {items.map((artifact) => (
-                        <ArtifactChip key={artifact._id} artifact={artifact} />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <WorkbenchTabs grouped={grouped} artifacts={artifacts} />
           )}
         </CardContent>
       </Card>
@@ -196,6 +179,88 @@ function groupArtifacts(artifacts: Artifact[]): Map<string, Artifact[]> {
     map.set(group, list);
   }
   return map;
+}
+
+/** Tabbed Workbench view (doc 10: "tab LP") — groups as filter tabs. */
+function WorkbenchTabs({
+  grouped,
+  artifacts,
+}: {
+  grouped: Map<string, Artifact[]>;
+  artifacts: Artifact[];
+}) {
+  const [activeTab, setActiveTab] = useState<string>("all");
+
+  // Only groups that actually have files get a tab; "Semua" is always there.
+  const availableGroups = ARTIFACT_GROUPS.filter(
+    (group) => (grouped.get(group.label)?.length ?? 0) > 0
+  );
+  const visibleGroups =
+    activeTab === "all"
+      ? availableGroups
+      : availableGroups.filter((g) => g.label === activeTab);
+
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab("all")}
+          className={cn(
+            "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+            activeTab === "all"
+              ? "bg-[#FAA61A]/15 text-[#FAA61A]"
+              : "bg-muted text-ink-2 hover:text-ink"
+          )}
+        >
+          Semua ({artifacts.length})
+        </button>
+        {availableGroups.map((group) => {
+          const count = grouped.get(group.label)?.length ?? 0;
+          return (
+            <button
+              key={group.label}
+              type="button"
+              onClick={() => setActiveTab(group.label)}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                activeTab === group.label
+                  ? "bg-[#FAA61A]/15 text-[#FAA61A]"
+                  : "bg-muted text-ink-2 hover:text-ink"
+              )}
+            >
+              {group.label} ({count})
+            </button>
+          );
+        })}
+      </div>
+
+      {visibleGroups.length === 0 ? (
+        <p className="py-4 text-sm text-ink-3">
+          Gak ada file di tab ini.
+        </p>
+      ) : (
+        <div className="space-y-5">
+          {visibleGroups.map((group) => {
+            const items = grouped.get(group.label) ?? [];
+            return (
+              <div key={group.label}>
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-3">
+                  <FileText className="h-3.5 w-3.5" />
+                  {group.label} ({items.length})
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {items.map((artifact) => (
+                    <ArtifactChip key={artifact._id} artifact={artifact} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function AgentRunner({ product }: { product: Product }) {

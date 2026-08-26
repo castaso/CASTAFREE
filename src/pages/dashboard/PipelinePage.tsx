@@ -79,9 +79,9 @@ export function ArtifactChip({ artifact }: { artifact: Artifact }) {
       )}
       <a
         href={url}
-        download={artifact.name}
+        download={artifact.kind === "landing_page" ? "index.html" : artifact.name}
         className="rounded p-0.5 text-ink-3 transition-colors hover:text-[#FAA61A]"
-        title={`Download ${meta.label}`}
+        title={`Download ${artifact.kind === "landing_page" ? "index.html" : meta.label}`}
       >
         <Download className="h-3.5 w-3.5" />
       </a>
