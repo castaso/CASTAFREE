@@ -9,13 +9,21 @@ import {
 // ── Internal data helpers (used by the pipelineAI action) ──
 
 export const createRun = internalMutation({
-  args: { userId: v.id("users"), topic: v.string(), createdAt: v.number() },
+  args: {
+    userId: v.id("users"),
+    topic: v.string(),
+    createdAt: v.number(),
+    productId: v.optional(v.id("products")),
+    agentIds: v.optional(v.array(v.string())),
+  },
   handler: async (ctx, args) => {
     return await ctx.db.insert("pipelineRuns", {
       userId: args.userId,
       topic: args.topic,
       status: "running",
       createdAt: args.createdAt,
+      productId: args.productId,
+      agentIds: args.agentIds,
     });
   },
 });
@@ -63,11 +71,12 @@ export const createTask = internalMutation({
       v.literal("failed")
     ),
     createdAt: v.number(),
+    model: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("pipelineTasks", {
       ...args,
-      model: "gpt-4o-mini",
+      model: args.model ?? "gpt-4o-mini",
     });
   },
 });
@@ -146,5 +155,49 @@ export const getRun = query({
     const run = await ctx.db.get(runId);
     if (run === null || run.userId !== userId) return null;
     return run;
+  },
+});
+
+export const listRunsByProduct = query({
+  args: { productId: v.id("products") },
+  handler: async (ctx, { productId }) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) return [];
+    return await ctx.db
+      .query("pipelineRuns")
+      .withIndex("by_product", (q) => q.eq("productId", productId))
+      .order("desc")
+      .collect();
+  },
+});
+
+// Latest completed outputs per agent for a product — used as running
+// context when only a subset of agents is re-run on an existing product.
+export const getProductContext = query({
+  args: { productId: v.id("products") },
+  handler: async (ctx, { productId }) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) return {};
+    const runs = await ctx.db
+      .query("pipelineRuns")
+      .withIndex("by_product", (q) => q.eq("productId", productId))
+      .order("desc")
+      .collect();
+    for (const run of runs) {
+      if (run.status !== "completed") continue;
+      const tasks = await ctx.db
+        .query("pipelineTasks")
+        .withIndex("by_run", (q) => q.eq("runId", run._id))
+        .order("asc")
+        .collect();
+      const outputs: Record<string, string> = {};
+      for (const task of tasks) {
+        if (task.status === "completed" && task.output) {
+          outputs[task.agentId] = task.output;
+        }
+      }
+      if (Object.keys(outputs).length > 0) return outputs;
+    }
+    return {};
   },
 });

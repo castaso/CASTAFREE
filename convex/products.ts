@@ -60,6 +60,17 @@ export const list = query({
   },
 });
 
+export const get = query({
+  args: { id: v.id("products") },
+  handler: async (ctx, { id }) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) return null;
+    const product = await ctx.db.get(id);
+    if (product === null || product.userId !== userId) return null;
+    return product;
+  },
+});
+
 export const create = mutation({
   args: {
     slug: v.string(),

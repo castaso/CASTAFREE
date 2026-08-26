@@ -14,6 +14,20 @@ export const listByRun = query({
   },
 });
 
+export const listByProduct = query({
+  args: { productId: v.id("products") },
+  handler: async (ctx, { productId }) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) return [];
+    const product = await ctx.db.get(productId);
+    if (product === null || product.userId !== userId) return [];
+    return await ctx.db
+      .query("artifacts")
+      .withIndex("by_product", (q) => q.eq("productId", productId))
+      .collect();
+  },
+});
+
 export const listMine = query({
   args: {},
   handler: async (ctx) => {

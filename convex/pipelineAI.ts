@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import OpenAI from "openai";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { action } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import {
   extractAdBriefs,
@@ -13,7 +13,6 @@ import {
   splitEbooks,
 } from "./lib/ebookPdf";
 
-const MODEL = "gpt-4o-mini";
 const IMAGE_MODEL = "gpt-image-1";
 const IMAGE_COST_PER_IMAGE = 0.042; // USD per 1024x1024 (medium quality)
 const MAX_AD_IMAGES = 5;
@@ -21,6 +20,8 @@ const MAX_EBOOKS = 3;
 
 const PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
   "gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.6 },
+  "gpt-4.1-mini": { inputPer1M: 0.4, outputPer1M: 1.6 },
+  "gpt-4o": { inputPer1M: 2.5, outputPer1M: 10 },
 };
 
 function estimateCost(
@@ -157,11 +158,31 @@ Tutup dengan rekomendasi distribusi (platform + rasio).
 Jawab dalam Bahasa Indonesia (prompt KIE & VEO tetap bahasa Inggris).`,
 };
 
+const AGENT_ORDER = ["maya", "reza", "dimas", "sari", "bayu"] as const;
+const AGENT_NAMES: Record<string, string> = {
+  maya: "Maya",
+  reza: "Reza",
+  dimas: "Dimas",
+  sari: "Sari",
+  bayu: "Bayu",
+};
+
+/** Validate a requested agent subset, preserving canonical order. */
+export function normalizeAgentIds(agentIds?: string[]): string[] {
+  if (!agentIds || agentIds.length === 0) return [...AGENT_ORDER];
+  const set = new Set(
+    agentIds.filter((id): id is (typeof AGENT_ORDER)[number] =>
+      (AGENT_ORDER as readonly string[]).includes(id)
+    )
+  );
+  return AGENT_ORDER.filter((id) => set.has(id));
+}
+
 // The recursive type inference from ctx.runMutation inside a loop confuses TS.
 // We use a function declaration to break the cycle.
-function runPipelineHandler(
+function runAgentsHandler(
   ctx: any,
-  args: { topic: string }
+  args: { topic: string; agentIds?: string[]; productId?: Id<"products"> }
 ): Promise<
   | {
       ok: true;
@@ -174,36 +195,78 @@ function runPipelineHandler(
     }
   | { ok: false; error: string }
 > {
-  return (async (ctx, { topic }) => {
+  return (async (ctx, { topic, agentIds, productId }) => {
     const rawUserId = await getAuthUserId(ctx);
     if (rawUserId === null) throw new Error("Not authenticated");
     const userId: Id<"users"> = rawUserId;
+
+    const selectedAgents = normalizeAgentIds(agentIds);
+    if (selectedAgents.length === 0) {
+      return { ok: false as const, error: "Pilih minimal satu agent." };
+    }
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return { ok: false as const, error: "OPENAI_API_KEY belum diset." };
     }
 
+    const model = await ctx.runQuery(api.userSettings.resolveModel);
     const openai = new OpenAI({ apiKey });
     const now = Date.now();
 
+    // Product context: name + outputs from the latest completed run.
+    let productName: string | null = null;
+    const priorOutputs: Record<string, string> = await ctx.runQuery(
+      api.pipelineData.getProductContext,
+      { productId: productId ?? ("000000000000000000000000" as Id<"products">) }
+    );
+
+    const runningContext: Record<string, string> = { TOPIC: topic };
+    for (const [agentId, output] of Object.entries(priorOutputs)) {
+      runningContext[`${agentId.toUpperCase()}_OUTPUT`] = output;
+      if (agentId === "maya") runningContext.RESEARCH = output;
+      if (agentId === "reza") runningContext.COPY = output;
+      if (agentId === "dimas") runningContext.PRODUCT = output;
+      if (agentId === "sari") runningContext.DESIGN = output;
+    }
+
+    const product = await ctx.runQuery(api.products.get, {
+      id: productId ?? ("000000000000000000000000" as Id<"products">),
+    });
+    if (productId && product === null) {
+      return { ok: false as const, error: "Produk tidak ditemukan." };
+    }
+    if (product) {
+      productName = product.name;
+      runningContext.PRODUCT_NAME = product.name;
+    }
+
+    const runTopic = product ? `${product.name} — ${topic}` : topic;
+    const isFullRun =
+      selectedAgents.length === AGENT_ORDER.length && !productId;
+
     const runId = await ctx.runMutation(internal.pipelineData.createRun, {
       userId,
-      topic,
+      topic: runTopic,
       createdAt: now,
+      productId,
+      agentIds: selectedAgents,
     });
 
-    const agentOrder = ["maya", "reza", "dimas", "sari", "bayu"];
-    const agentNames = ["Maya", "Reza", "Dimas", "Sari", "Bayu"];
-    const runningContext: Record<string, string> = { TOPIC: topic };
+    for (let i = 0; i < selectedAgents.length; i++) {
+      const id = selectedAgents[i];
+      const name = AGENT_NAMES[id] ?? id;
 
-    for (let i = 0; i < agentOrder.length; i++) {
-      const id = agentOrder[i];
-      const name = agentNames[i];
+      const previousId = i > 0 ? selectedAgents[i - 1] : null;
+      const priorChain = previousId
+        ? runningContext[`${previousId.toUpperCase()}_OUTPUT`] ?? ""
+        : "";
       const inputText =
         i === 0
-          ? topic
-          : `Lanjutin pipeline untuk topik: "${topic}"\n\nHasil agent sebelumnya:\n${runningContext[agentOrder[i - 1].toUpperCase()] ?? ""}`;
+          ? product
+            ? `Lanjut kerjain produk "${productName}" untuk topik: ${topic}`
+            : topic
+          : `Lanjutin pipeline untuk topik: "${topic}"\n\nHasil agent sebelumnya:\n${priorChain}`;
 
       const taskId = await ctx.runMutation(internal.pipelineData.createTask, {
         runId,
@@ -214,6 +277,7 @@ function runPipelineHandler(
         input: inputText,
         status: "running",
         createdAt: Date.now(),
+        model,
       });
 
       let systemPrompt = AGENT_PROMPTS[id] ?? "";
@@ -223,7 +287,7 @@ function runPipelineHandler(
 
       try {
         const completion = await openai.chat.completions.create({
-          model: MODEL,
+          model,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: inputText },
@@ -237,7 +301,7 @@ function runPipelineHandler(
         const usage = completion.usage;
         const promptTokens = usage?.prompt_tokens ?? 0;
         const completionTokens = usage?.completion_tokens ?? 0;
-        const cost = estimateCost(MODEL, usage ?? {});
+        const cost = estimateCost(model, usage ?? {});
 
         await ctx.runMutation(internal.pipelineData.completeTask, {
           taskId,
@@ -251,7 +315,7 @@ function runPipelineHandler(
         await ctx.runMutation(internal.usage.insertUsage, {
           userId,
           source: `Pipeline: ${name}`,
-          model: MODEL,
+          model,
           promptTokens,
           completionTokens,
           totalTokens: promptTokens + completionTokens,
@@ -310,6 +374,7 @@ function runPipelineHandler(
         await ctx.runMutation(internal.artifacts.saveInternal, {
           userId,
           runId,
+          productId,
           agentId,
           kind,
           name,
@@ -326,7 +391,7 @@ function runPipelineHandler(
     };
 
     // Maya — Brand Visual Identity + konsep produk
-    if (runningContext.RESEARCH) {
+    if (selectedAgents.includes("maya") && runningContext.RESEARCH) {
       await saveTextArtifact(
         "bvi",
         "maya",
@@ -336,7 +401,7 @@ function runPipelineHandler(
     }
 
     // Reza — image ad briefs artifact + generate 5 ad images to Galeri
-    if (runningContext.COPY) {
+    if (selectedAgents.includes("reza") && runningContext.COPY) {
       const briefs = extractAdBriefs(runningContext.COPY);
       if (briefs.length > 0) {
         const briefDoc = briefs
@@ -396,7 +461,7 @@ function runPipelineHandler(
     }
 
     // Dimas — 3 ebook PDF siap jual
-    if (runningContext.PRODUCT) {
+    if (selectedAgents.includes("dimas") && runningContext.PRODUCT) {
       const ebooks = splitEbooks(runningContext.PRODUCT);
       for (const [i, ebook] of ebooks.slice(0, MAX_EBOOKS).entries()) {
         try {
@@ -410,6 +475,7 @@ function runPipelineHandler(
           await ctx.runMutation(internal.artifacts.saveInternal, {
             userId,
             runId,
+            productId,
             agentId: "dimas",
             kind: "ebook_pdf",
             name: `[Dimas] ${safeTitle}.pdf`,
@@ -425,7 +491,7 @@ function runPipelineHandler(
     }
 
     // Sari — landing page 14-section (HTML self-contained)
-    if (runningContext.DESIGN) {
+    if (selectedAgents.includes("sari") && runningContext.DESIGN) {
       const html = extractHtml(runningContext.DESIGN);
       if (html) {
         await saveTextArtifact(
@@ -446,7 +512,7 @@ function runPipelineHandler(
     }
 
     // Bayu — setting image KIE + prompt video VEO per scene
-    if (runningContext.BAYU_OUTPUT) {
+    if (selectedAgents.includes("bayu") && runningContext.BAYU_OUTPUT) {
       await saveTextArtifact(
         "kie_veo_sheet",
         "bayu",
@@ -455,13 +521,14 @@ function runPipelineHandler(
       );
     }
 
-    // Scalev stub — daftarkan produk + export pack copy-paste
-    try {
-      const slug = topic
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "")
-        .slice(0, 60);
+    // Scalev stub — daftarkan produk + export pack (full pipeline only)
+    if (isFullRun) {
+      try {
+        const slug = topic
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "")
+          .slice(0, 60);
       await ctx.runMutation(internal.products.createInternal, {
         userId,
         name: topic.slice(0, 80),
@@ -506,8 +573,9 @@ function runPipelineHandler(
         `[Scalev] ${topic} — Export Pack.md`,
         scalevPack
       );
-    } catch {
-      artifactsFailed += 1;
+      } catch {
+        artifactsFailed += 1;
+      }
     }
 
     await ctx.runMutation(internal.pipelineData.completeRun, {
@@ -524,7 +592,7 @@ function runPipelineHandler(
       imagesFailed,
       artifactsSaved,
       artifactsFailed,
-      outputs: agentOrder.map((id) => ({
+      outputs: selectedAgents.map((id) => ({
         agent: id,
         output: runningContext[`${id.toUpperCase()}_OUTPUT`] ?? "",
       })),
@@ -532,7 +600,17 @@ function runPipelineHandler(
   })(ctx, args);
 }
 
+export const runAgents = action({
+  args: {
+    topic: v.string(),
+    agentIds: v.optional(v.array(v.string())),
+    productId: v.optional(v.id("products")),
+  },
+  handler: runAgentsHandler,
+});
+
+// Back-compat alias used by PipelinePage: full pipeline, no product binding.
 export const runPipeline = action({
   args: { topic: v.string() },
-  handler: runPipelineHandler,
+  handler: runAgentsHandler,
 });

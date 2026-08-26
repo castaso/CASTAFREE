@@ -7,9 +7,11 @@ import {
   ChevronsRight,
   Coins,
   GraduationCap,
+  History,
   House,
   Images,
   LogOut,
+  Search,
   Settings,
   Sparkles,
   Users,
@@ -18,22 +20,27 @@ import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
 import { HomePage } from "@/pages/dashboard/HomePage";
 import { ProductsPage } from "@/pages/dashboard/ProductsPage";
+import { ProductDetailPage } from "@/pages/dashboard/ProductDetailPage";
+import { RisetPage } from "@/pages/dashboard/RisetPage";
 import { GalleryPage } from "@/pages/dashboard/GalleryPage";
 import { AvatarsPage } from "@/pages/dashboard/AvatarsPage";
 import { MentorPage } from "@/pages/dashboard/MentorPage";
 import { PipelinePage } from "@/pages/dashboard/PipelinePage";
+import { RunsPage } from "@/pages/dashboard/RunsPage";
 import { CostPage } from "@/pages/dashboard/CostPage";
 import { SettingsPage } from "@/pages/dashboard/SettingsPage";
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Beranda", icon: House, end: true },
-  { to: "/dashboard/products", label: "Produk", icon: Boxes },
-  { to: "/dashboard/gallery", label: "Galeri", icon: Images },
-  { to: "/dashboard/avatars", label: "Avatar", icon: Users },
-  { to: "/dashboard/mentor", label: "AI Mentor", icon: GraduationCap },
-  { to: "/dashboard/pipeline", label: "Pipeline", icon: Sparkles },
-  { to: "/dashboard/cost", label: "Biaya", icon: Coins },
-  { to: "/dashboard/settings", label: "Pengaturan", icon: Settings },
+  { to: "/dashboard/riset", label: "Riset", icon: Search, end: false },
+  { to: "/dashboard/products", label: "Produk", icon: Boxes, end: true },
+  { to: "/dashboard/gallery", label: "Galeri", icon: Images, end: true },
+  { to: "/dashboard/avatars", label: "Avatar", icon: Users, end: true },
+  { to: "/dashboard/mentor", label: "AI Mentor", icon: GraduationCap, end: true },
+  { to: "/dashboard/pipeline", label: "Pipeline", icon: Sparkles, end: true },
+  { to: "/dashboard/runs", label: "Riwayat Run", icon: History, end: true },
+  { to: "/dashboard/cost", label: "Biaya", icon: Coins, end: true },
+  { to: "/dashboard/settings", label: "Pengaturan", icon: Settings, end: true },
 ];
 
 const SIDEBAR_KEY = "ld-sidebar-expanded";
@@ -160,11 +167,14 @@ export function DashboardPage() {
         <div className="mx-auto max-w-[1440px] px-6 py-8 lg:px-10">
           <Routes>
             <Route index element={<HomePage />} />
+            <Route path="riset" element={<RisetPage />} />
             <Route path="products" element={<ProductsPage />} />
+            <Route path="products/:id" element={<ProductDetailPage />} />
             <Route path="gallery" element={<GalleryPage />} />
             <Route path="avatars" element={<AvatarsPage />} />
             <Route path="mentor" element={<MentorPage />} />
             <Route path="pipeline" element={<PipelinePage />} />
+            <Route path="runs" element={<RunsPage />} />
             <Route path="cost" element={<CostPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

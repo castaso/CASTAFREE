@@ -15,6 +15,7 @@ export default defineSchema({
     ),
     agent: v.string(),
     date: v.string(),
+    sourceRunId: v.optional(v.id("pipelineRuns")),
   }).index("by_user", ["userId"]),
   licenses: defineTable({
     userId: v.id("users"),
@@ -56,11 +57,15 @@ export default defineSchema({
       v.literal("completed"),
       v.literal("failed")
     ),
+    productId: v.optional(v.id("products")),
+    agentIds: v.optional(v.array(v.string())),
     imagesSaved: v.optional(v.number()),
     imagesFailed: v.optional(v.number()),
     createdAt: v.number(),
     completedAt: v.optional(v.number()),
-  }).index("by_user", ["userId", "createdAt"]),
+  })
+    .index("by_user", ["userId", "createdAt"])
+    .index("by_product", ["productId"]),
   pipelineTasks: defineTable({
     runId: v.id("pipelineRuns"),
     userId: v.id("users"),
@@ -88,6 +93,7 @@ export default defineSchema({
   artifacts: defineTable({
     userId: v.id("users"),
     runId: v.optional(v.id("pipelineRuns")),
+    productId: v.optional(v.id("products")),
     agentId: v.string(),
     kind: v.union(
       v.literal("bvi"),
@@ -104,7 +110,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_user", ["userId", "createdAt"])
-    .index("by_run", ["runId"]),
+    .index("by_run", ["runId"])
+    .index("by_product", ["productId"]),
   gallery: defineTable({
     userId: v.id("users"),
     storageId: v.id("_storage"),
@@ -113,4 +120,30 @@ export default defineSchema({
     size: v.number(),
     createdAt: v.number(),
   }).index("by_user", ["userId", "createdAt"]),
+  concepts: defineTable({
+    userId: v.id("users"),
+    topic: v.string(),
+    index: v.number(),
+    title: v.string(),
+    angle: v.string(),
+    targetAudience: v.string(),
+    format: v.string(),
+    price: v.string(),
+    rawText: v.string(),
+    status: v.union(
+      v.literal("proposed"),
+      v.literal("approved"),
+      v.literal("rejected")
+    ),
+    productId: v.optional(v.id("products")),
+    runId: v.optional(v.id("pipelineRuns")),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId", "createdAt"])
+    .index("by_run", ["runId"]),
+  userSettings: defineTable({
+    userId: v.id("users"),
+    model: v.string(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
 });

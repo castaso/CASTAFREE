@@ -42,7 +42,7 @@ const ARTIFACT_META: Record<
   scalev_pack: { label: "Scalev Pack", icon: Store },
 };
 
-function ArtifactChip({ artifact }: { artifact: Artifact }) {
+export function ArtifactChip({ artifact }: { artifact: Artifact }) {
   const meta = ARTIFACT_META[artifact.kind] ?? {
     label: artifact.kind,
     icon: FileText,
@@ -100,7 +100,7 @@ function fmtDate(ts: number) {
   }).format(ts);
 }
 
-function AgentAvatar({ agentId, size = "sm" }: { agentId: string; size?: "sm" | "md" | "lg" }) {
+export function AgentAvatar({ agentId, size = "sm" }: { agentId: string; size?: "sm" | "md" | "lg" }) {
   const agent = AGENTS.find((a) => a.id === agentId);
   const initial = agent?.name?.charAt(0) ?? "?";
   const color = AGENT_COLORS[agentId] ?? "#6B7280";
@@ -115,7 +115,7 @@ function AgentAvatar({ agentId, size = "sm" }: { agentId: string; size?: "sm" | 
   );
 }
 
-function TaskRow({ task, isExpanded, onToggle }: { task: PipelineTask; isExpanded: boolean; onToggle: () => void }) {
+export function TaskRow({ task, isExpanded, onToggle }: { task: PipelineTask; isExpanded: boolean; onToggle: () => void }) {
   const agent = AGENTS.find((a) => a.id === task.agentId);
   const color = AGENT_COLORS[task.agentId] ?? "#6B7280";
 
@@ -190,7 +190,7 @@ function TaskRow({ task, isExpanded, onToggle }: { task: PipelineTask; isExpande
   );
 }
 
-function RunCard({ run, tasks }: { run: PipelineRun; tasks: PipelineTask[] }) {
+export function RunCard({ run, tasks }: { run: PipelineRun; tasks: PipelineTask[] }) {
   const [expanded, setExpanded] = useState(false);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const artifacts = useQuery(

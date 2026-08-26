@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useAction, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@generated/api";
 import {
   Database,
@@ -9,15 +9,56 @@ import {
   LogOut,
   RefreshCw,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useToast } from "@/components/toast";
 import { cn } from "@/lib/utils";
+
+const MODEL_OPTIONS = [
+  {
+    id: "gpt-4o-mini",
+    name: "GPT-4o mini",
+    description: "Cepat & hemat — default buat kerja harian.",
+  },
+  {
+    id: "gpt-4.1-mini",
+    name: "GPT-4.1 mini",
+    description: "Lebih pinter dikit, harga masih bersahabat.",
+  },
+  {
+    id: "gpt-4o",
+    name: "GPT-4o",
+    description: "Paling pintar — buat produk premium. Paling mahal.",
+  },
+] as const;
 
 export function SettingsPage() {
   const { signOut } = useAuthActions();
   const licenses = useQuery(api.licenses.myLicenses);
+  const settings = useQuery(api.userSettings.getSettings);
+  const setModel = useMutation(api.userSettings.setModel);
+  const showToast = useToast();
+  const [savingModel, setSavingModel] = useState(false);
+
+  async function onPickModel(model: string) {
+    setSavingModel(true);
+    try {
+      await setModel({ model });
+      showToast(`Model AI diganti ke ${model}.`, "success");
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Gagal ganti model.",
+        "error"
+      );
+    } finally {
+      setSavingModel(false);
+    }
+  }
+
   const license = licenses?.[0];
 
   const checkTurso = useAction(api.turso.health);
@@ -96,6 +137,70 @@ export function SettingsPage() {
                 Belum ada license aktif di akun ini. Aktivasi lewat halaman
                 Beranda.
               </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[#FAA61A]" />
+              Model AI
+            </CardTitle>
+            <CardDescription>
+              Model yang dipakai tim AI (Riset, Pipeline, agent per produk).
+              Model lebih besar = hasil lebih bagus, biaya lebih tinggi.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {settings === undefined ? (
+              <div className="flex items-center gap-2 py-2 text-sm text-ink-3">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading...
+              </div>
+            ) : (
+              (() => {
+                const currentModel = settings?.model ?? "gpt-4o-mini";
+                return (
+              <div className="space-y-2">
+                {MODEL_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => void onPickModel(option.id)}
+                    disabled={savingModel || option.id === currentModel}
+                    aria-pressed={option.id === currentModel}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-all",
+                      option.id === currentModel
+                        ? "border-[#FAA61A] bg-[#FAA61A]/10"
+                        : "border-border-d bg-app hover:border-[#FAA61A]"
+                    )}
+                  >
+                    <span>
+                      <span className="block text-sm font-semibold text-ink">
+                        {option.name}
+                      </span>
+                      <span className="block text-xs text-ink-3">
+                        {option.description}
+                      </span>
+                    </span>
+                    {option.id === currentModel ? (
+                      <Badge variant="success">Dipakai</Badge>
+                    ) : savingModel ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-ink-3" />
+                    ) : (
+                      <Badge variant="outline">Pilih</Badge>
+                    )}
+                  </button>
+                ))}
+                <p className="text-[11px] text-ink-3">
+                  Default: gpt-4o-mini. Perubahan langsung kepake di run
+                  berikutnya.
+                </p>
+              </div>
+                );
+              })()
             )}
           </CardContent>
         </Card>

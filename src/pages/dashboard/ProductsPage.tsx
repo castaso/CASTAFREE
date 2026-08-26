@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@generated/api";
 import { Loader2, Plus, Search, Trash2 } from "lucide-react";
@@ -120,8 +121,12 @@ export function ProductsPage() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {filtered.map((product: Product) => (
-                <Card
+                <Link
                   key={product._id}
+                  to={`/dashboard/products/${product._id}`}
+                  className="block"
+                >
+                <Card
                   className="group transition-all hover:-translate-y-0.5 hover:shadow-pop"
                 >
                   <CardContent className="p-5">
@@ -147,7 +152,11 @@ export function ProductsPage() {
                       </p>
                       <button
                         type="button"
-                        onClick={() => onRemove(product._id)}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          void onRemove(product._id);
+                        }}
                         aria-label={`Hapus ${product.name}`}
                         className="rounded-md p-1.5 text-ink-3 transition-colors hover:bg-danger-bg hover:text-danger"
                       >
@@ -156,6 +165,7 @@ export function ProductsPage() {
                     </div>
                   </CardContent>
                 </Card>
+                </Link>
               ))}
             </div>
           )}
