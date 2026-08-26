@@ -86,3 +86,55 @@ function finalizeUgc(section: {
     caption,
   };
 }
+
+// ── Bayu (Agent 05) sheet parsing ───────────────────────────────────────────
+
+export type SettingImageSection = {
+  index: number;
+  title: string;
+  prompt: string;
+};
+
+const SETTING_IMAGE_MARKER =
+  /^\s*={2,}\s*SETTING\s*IMAGE\s*(\d+)\s*[:\-–—]?\s*(.+?)\s*={2,}\s*$/i;
+
+/** Pure helper: extract ===SETTING IMAGE n=== sections from a block (unit-tested). */
+export function parseSettingSections(block: string): SettingImageSection[] {
+  const sections: SettingImageSection[] = [];
+  let current: SettingImageSection | null = null;
+  for (const line of block.split(/\r?\n/)) {
+    const match = SETTING_IMAGE_MARKER.exec(line);
+    if (match) {
+      if (current) sections.push(current);
+      current = {
+        index: parseInt(match[1], 10),
+        title: match[2].trim(),
+        prompt: "",
+      };
+    } else if (current) {
+      current.prompt += `${line}\n`;
+    }
+  }
+  if (current) sections.push(current);
+  return sections
+    .map((s) => ({ ...s, prompt: s.prompt.trim() }))
+    .filter((s) => s.prompt.length > 0);
+}
+
+/**
+ * Pure helper: split Bayu's combined sheet into the setting-images block
+ * and the VEO prompts block (unit-tested).
+ */
+export function splitBayuSheet(
+  output: string
+): { settings: SettingImageSection[]; veo: string } {
+  const settingsMatch =
+    /=+\s*SETTING\s*IMAGES\s*=+\s*\n?([\s\S]*?)(?==+\s*PROMPT\s*VEO\s*=+|$)/i.exec(
+      output
+    );
+  const veoMatch = /=+\s*PROMPT\s*VEO\s*=+\s*\n?([\s\S]*)$/i.exec(output);
+  return {
+    settings: settingsMatch ? parseSettingSections(settingsMatch[1]) : [],
+    veo: veoMatch?.[1]?.trim() ?? "",
+  };
+}

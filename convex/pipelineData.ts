@@ -17,6 +17,8 @@ export const createRun = internalMutation({
     agentIds: v.optional(v.array(v.string())),
     referenceBook: v.optional(v.string()),
     angleOverride: v.optional(v.string()),
+    scriptIndexes: v.optional(v.array(v.number())),
+    avatarStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("pipelineRuns", {
@@ -28,6 +30,8 @@ export const createRun = internalMutation({
       agentIds: args.agentIds,
       referenceBook: args.referenceBook,
       angleOverride: args.angleOverride,
+      scriptIndexes: args.scriptIndexes,
+      avatarStorageId: args.avatarStorageId,
     });
   },
 });

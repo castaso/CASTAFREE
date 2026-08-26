@@ -41,7 +41,8 @@ const ARTIFACT_META: Record<
   image_ad_brief: { label: "Brief Image Ads", icon: ImageIcon },
   ebook_pdf: { label: "Ebook PDF", icon: FileText },
   landing_page: { label: "Landing Page", icon: Globe },
-  kie_veo_sheet: { label: "KIE & VEO", icon: Video },
+  kie_veo_sheet: { label: "Prompt VEO", icon: Video },
+  setting_images: { label: "Setting Images", icon: ImageIcon },
   scalev_pack: { label: "Scalev Pack", icon: Store },
 };
 

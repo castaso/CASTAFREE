@@ -109,7 +109,7 @@ test("shipped pipelineAI.ts demands doc-exact deliverables from every agent", ()
   expect(src).toContain("===IMAGE AD");
   expect(src).toContain("===EBOOK");
   expect(src).toContain("TEPAT 14 section");
-  expect(src).toContain("Setting Image KIE");
+  expect(src).toContain("===SETTING IMAGES===");
   expect(src).toContain("internal.artifacts.saveInternal");
   expect(src).toContain("internal.products.createInternal");
 });

@@ -123,6 +123,8 @@ export async function generateImageBytes(opts: {
   kieKey?: string;
   openaiApiKey?: string;
   prompt: string;
+  /** Optional public image URL for consistency (KIE image-to-image). */
+  referenceImageUrl?: string;
   timeoutMs?: number;
 }): Promise<MediaResult> {
   if (opts.kieKey) {
@@ -130,7 +132,8 @@ export async function generateImageBytes(opts: {
       const bytes = await generateImageViaKie(
         opts.kieKey,
         opts.prompt,
-        opts.timeoutMs ?? 180_000
+        opts.timeoutMs ?? 180_000,
+        opts.referenceImageUrl
       );
       return { ok: true, ...bytes, source: "kie" };
     } catch (err) {
@@ -160,13 +163,19 @@ export async function generateImageBytes(opts: {
 async function generateImageViaKie(
   key: string,
   prompt: string,
-  timeoutMs: number
+  timeoutMs: number,
+  referenceImageUrl?: string
 ): Promise<{ bytes: Uint8Array; mime: string }> {
+  const input: Record<string, unknown> = { prompt };
+  if (referenceImageUrl) {
+    // KIE image-to-image: the reference guides consistency (avatar, brand).
+    input.image_urls = [referenceImageUrl];
+  }
   const created = await kieFetchJson(key, KIE_JOBS_CREATE, {
     method: "POST",
     body: JSON.stringify({
       model: KIE_IMAGE_MODEL,
-      input: { prompt },
+      input,
     }),
   });
   const taskId = created.data?.taskId;

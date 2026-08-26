@@ -61,6 +61,8 @@ export default defineSchema({
     agentIds: v.optional(v.array(v.string())),
     referenceBook: v.optional(v.string()),
     angleOverride: v.optional(v.string()),
+    scriptIndexes: v.optional(v.array(v.number())),
+    avatarStorageId: v.optional(v.id("_storage")),
     imagesSaved: v.optional(v.number()),
     imagesFailed: v.optional(v.number()),
     createdAt: v.number(),
@@ -105,6 +107,7 @@ export default defineSchema({
       v.literal("ebook_pdf"),
       v.literal("landing_page"),
       v.literal("kie_veo_sheet"),
+      v.literal("setting_images"),
       v.literal("scalev_pack")
     ),
     name: v.string(),

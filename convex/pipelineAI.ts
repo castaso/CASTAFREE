@@ -11,7 +11,7 @@ import {
   renderEbookPdf,
   splitEbooks,
 } from "./lib/ebookPdf";
-import { splitUgcScripts } from "./lib/ugc";
+import { splitUgcScripts, splitBayuSheet } from "./lib/ugc";
 import {
   callText,
   estimateModelCost,
@@ -136,13 +136,13 @@ Aturan output:
 Jangan potong kode — tulis HTML sampai selesai.`,
 
   bayu: `Kamu adalah **Bayu**, Video Producer di CAST/|FREE.
-Tugas kamu: nyiapin setting image KIE + prompt video VEO per scene.
+Tugas kamu: nyiapin setting image KIE + prompt video VEO per scene, berdasarkan script UGC yang udah ada.
+
+**Script yang dikerjakan:**
+{COPY}
 
 **Input dari Sari (Web Designer):**
 {DESIGN}
-
-**Input dari Reza (Copywriter):**
-{COPY}
 
 **Input dari Dimas (Product Builder):**
 {PRODUCT}
@@ -150,13 +150,18 @@ Tugas kamu: nyiapin setting image KIE + prompt video VEO per scene.
 **Input dari Maya (Research Analyst) — BVI:**
 {RESEARCH}
 
-Susun output dengan format PERSIS seperti ini:
+Keluarkan output dalam DUA blok dengan format PERSIS seperti ini:
 
-## Setting Image KIE
-Untuk setiap visual yang dibutuhkan (produk, UGC thumbnail, ads, landing page):
-- **[Nama visual]** — model rekomendasi, aspect ratio, style preset, prompt positif lengkap (Inggris), negative prompt, dan parameter lain (steps/CFG/guidance jika relevan).
+===SETTING IMAGES===
+Untuk SETIAP script yang dikerjakan, satu section dengan marker persis:
+===SETTING IMAGE 1: [Judul sesuai judul script]===
+Prompt: [prompt image generator dalam bahasa Inggris, siap tempel — subjek/avatar, komposisi, ekspresi, gaya, warna HEX dari BVI]
+Rasio: [9:16 / 16:10 / 1:1]
+Style: [style preset singkat]
 
-## Prompt Video VEO Per Scene
+(ulangi sesuai jumlah script; kalau avatar reference dikasih user, wajah/orang di semua Prompt HARUS konsisten dengan avatar itu)
+
+===PROMPT VEO===
 Breakdown video iklan jadi scene-scene. Untuk TIAP scene:
 - **Scene n ([durasi detik])** — deskripsi visual, gerakan kamera, subjek & aksi, mood/lighting, VO/narasi, teks overlay.
 - Prompt VEO (Inggris, satu paragraf siap tempel ke Google VEO).
@@ -207,6 +212,43 @@ export function buildDimasContext(
   return lines.join("\n");
 }
 
+/**
+ * Doc 11: resolve a fetchable public URL for a Galeri image so KIE can use
+ * it as consistency reference. Prefers Supabase mirror; falls back to the
+ * Convex storage URL. Returns null when nothing works.
+ */
+async function resolvePublicImageUrl(
+  ctx: any,
+  userId: Id<"users">,
+  storageId: Id<"_storage">,
+  supabaseRow: { key: string; meta?: { projectUrl?: string; bucket?: string } } | null
+): Promise<string | null> {
+  const projectUrl = supabaseRow?.meta?.projectUrl;
+  if (supabaseRow && projectUrl) {
+    try {
+      const blob = await ctx.storage.get(storageId);
+      if (blob) {
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        return await uploadPublic({
+          projectUrl,
+          serviceKey: supabaseRow.key,
+          bucket: supabaseRow.meta?.bucket ?? "castafree",
+          path: `${userId}/avatars/${storageId}.png`,
+          bytes,
+          mimeType: blob.type || "image/png",
+        });
+      }
+    } catch {
+      // fall through to storage URL
+    }
+  }
+  try {
+    return (await ctx.storage.getUrl(storageId)) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // The recursive type inference from ctx.runMutation inside a loop confuses TS.
 // We use a function declaration to break the cycle.
 function runAgentsHandler(
@@ -220,6 +262,10 @@ function runAgentsHandler(
     /** Doc 09 step 2: optional Dimas overrides. */
     referenceBook?: string;
     topicAngleOverride?: string;
+    /** Doc 11: which of Reza's scripts (1-5) Bayu should process. */
+    scriptIndexes?: number[];
+    /** Doc 11: avatar image from Galeri used as consistency reference. */
+    avatarStorageId?: Id<"_storage">;
   }
 ): Promise<
   | {
@@ -240,6 +286,8 @@ function runAgentsHandler(
     generateImages,
     referenceBook,
     topicAngleOverride,
+    scriptIndexes,
+    avatarStorageId,
   }) => {
     const shouldGenerateImages = generateImages !== false;
     const rawUserId = await getAuthUserId(ctx);
@@ -319,6 +367,9 @@ function runAgentsHandler(
       agentIds: selectedAgents,
       referenceBook: referenceBook?.trim() || undefined,
       angleOverride: topicAngleOverride?.trim() || undefined,
+      scriptIndexes:
+        scriptIndexes && scriptIndexes.length > 0 ? scriptIndexes : undefined,
+      avatarStorageId: avatarStorageId ?? undefined,
     });
 
     for (let i = 0; i < selectedAgents.length; i++) {
@@ -352,6 +403,32 @@ function runAgentsHandler(
         );
         if (dimasContext) {
           inputText = `${inputText}\n\n${dimasContext}`;
+        }
+      }
+
+      // Doc 11: scope Bayu to the selected scripts only.
+      if (id === "bayu" && scriptIndexes && scriptIndexes.length > 0) {
+        const scripts = splitUgcScripts(runningContext.COPY ?? "");
+        if (scripts.length > 0) {
+          const chosen = scripts.filter((s) =>
+            scriptIndexes.includes(s.index)
+          );
+          if (chosen.length > 0) {
+            const chosenCopy = chosen
+              .map(
+                (s) =>
+                  `===SCRIPT ${s.index}: ${s.title}===\n${s.script}${
+                    s.caption
+                      ? `\nCaption Meta:\nPrimary text: ${s.caption.primaryText}\nHeadline: ${s.caption.headline}\nDescription: ${s.caption.description}`
+                      : ""
+                  }`
+              )
+              .join("\n\n");
+            inputText = `${inputText}\n\nKerjakan HANYA script berikut:\n\n${chosenCopy}`;
+            // Bayu is the last agent; narrowing COPY here also scopes the
+            // system-prompt placeholder substitution to the chosen scripts.
+            runningContext.COPY = `Hanya script terpilih:\n\n${chosenCopy}`;
+          }
         }
       }
 
@@ -459,6 +536,7 @@ function runAgentsHandler(
         | "image_ad_brief"
         | "landing_page"
         | "kie_veo_sheet"
+        | "setting_images"
         | "scalev_pack",
       agentId: string,
       name: string,
@@ -662,43 +740,95 @@ function runAgentsHandler(
       }
     }
 
-    // Bayu — setting image KIE + prompt video VEO per scene
+    // Bayu — setting images (KIE) + VEO prompts, split into two artifacts.
     if (selectedAgents.includes("bayu") && runningContext.BAYU_OUTPUT) {
-      await saveTextArtifact(
-        "kie_veo_sheet",
-        "bayu",
-        `[Bayu] ${topic} — Setting KIE & Prompt VEO.md`,
-        runningContext.BAYU_OUTPUT
-      );
+      const { settings, veo } = splitBayuSheet(runningContext.BAYU_OUTPUT);
 
-      // Auto-render the first scene via KIE Veo when configured.
-      if (kieKey) {
-        try {
-          const scenePrompt =
-            /Prompt VEO[^:]*:\s*([\s\S]{20,900}?)(?=\n\s*-\s|\n#|\n##|$)/i.exec(
-              runningContext.BAYU_OUTPUT
-            )?.[1]?.trim() ?? `${topic} — cinematic product ad, premium look`;
-          const video = await generateVeoVideo({
-            kieKey,
-            prompt: scenePrompt.slice(0, 900),
-            aspectRatio: "9:16",
-          });
-          if (video.ok && video.bytes) {
-            const buffer = Buffer.from(video.bytes);
+      if (veo) {
+        await saveTextArtifact(
+          "kie_veo_sheet",
+          "bayu",
+          `[Bayu] ${topic} — Prompt VEO.md`,
+          veo
+        );
+      }
+      if (settings.length > 0) {
+        const settingsDoc = settings
+          .map(
+            (s) =>
+              `===SETTING IMAGE ${s.index}: ${s.title}===\n\n${s.prompt}`
+          )
+          .join("\n\n---\n\n");
+        await saveTextArtifact(
+          "setting_images",
+          "bayu",
+          `[Bayu] ${topic} — Setting Image (KIE).md`,
+          settingsDoc
+        );
+      }
+
+      // Doc 11 step 3: generate the setting images — requires KIE + Supabase
+      // (public URLs as references). Skipped silently otherwise.
+      const supabaseUrl = supabaseRow?.meta?.projectUrl;
+      if (kieKey && supabaseUrl && settings.length > 0) {
+        const bucket = supabaseRow.meta?.bucket ?? "castafree";
+        const avatarUrl = avatarStorageId
+          ? await resolvePublicImageUrl(ctx, userId, avatarStorageId, supabaseRow)
+          : null;
+        for (const [i, setting] of settings.slice(0, MAX_AD_IMAGES).entries()) {
+          try {
+            const media = await generateImageBytes({
+              kieKey,
+              prompt: `${setting.prompt.slice(0, 900)}\n\nKonteks brand (BVI):\n${(runningContext.RESEARCH ?? "").slice(-500)}`,
+              referenceImageUrl: avatarUrl ?? undefined,
+            });
+            if (!media.ok || !media.bytes) {
+              throw new Error(media.error ?? "Generate setting image gagal.");
+            }
+            const buffer = Buffer.from(media.bytes);
+            const mimeType = media.mime ?? "image/png";
             const storageId = await ctx.storage.store(
-              new Blob([buffer], { type: "video/mp4" })
+              new Blob([buffer], { type: mimeType })
             );
             await ctx.runMutation(internal.gallery.saveInternal, {
               userId,
               storageId,
-              name: `[Bayu] ${topic} — Video VEO Scene 1.mp4`,
-              mimeType: "video/mp4",
+              name: `[Bayu] ${topic} — Setting Image ${i + 1}.png`,
+              mimeType,
               size: buffer.length,
             });
-            imagesSaved += 1; // surfaced as "media saved to Galeri"
+
+            // Public URL for downstream KIE/VEO references (doc 05).
+            try {
+              const safeName = `[Bayu] ${topic} — Setting Image ${i + 1}`
+                .replace(/[^\w.-]+/g, "_");
+              const publicUrl = await uploadPublic({
+                projectUrl: supabaseUrl,
+                serviceKey: supabaseRow.key,
+                bucket,
+                path: `${userId}/setting-images/${runId}/${safeName}.png`,
+                bytes: new Uint8Array(buffer),
+                mimeType,
+              });
+              void publicUrl; // available for future reference wiring
+            } catch {
+              // mirror is best-effort; Galeri already has the image
+            }
+
+            await ctx.runMutation(internal.usage.insertUsage, {
+              userId,
+              source: "Pipeline: Setting Image AI (KIE)",
+              model: "kie/nano-banana",
+              promptTokens: 0,
+              completionTokens: 0,
+              totalTokens: 0,
+              cost: 0,
+              createdAt: Date.now(),
+            });
+            imagesSaved += 1;
+          } catch {
+            imagesFailed += 1;
           }
-        } catch {
-          // Optional — sheet alone is still a complete deliverable.
         }
       }
     }
@@ -818,6 +948,8 @@ export const runAgents = action({
     generateImages: v.optional(v.boolean()),
     referenceBook: v.optional(v.string()),
     topicAngleOverride: v.optional(v.string()),
+    scriptIndexes: v.optional(v.array(v.number())),
+    avatarStorageId: v.optional(v.id("_storage")),
   },
   handler: runAgentsHandler,
 });
@@ -860,9 +992,17 @@ export const renderVeo = action({
     const url = await ctx.storage.getUrl(sheet.storageId);
     if (!url) return { ok: false as const, error: "File sheet gak bisa dibaca." };
     const text = await (await fetch(url)).text();
-    const scenePrompt =
-      /Prompt VEO[^:]*:\s*([\s\S]{20,900}?)(?=\n\s*-\s|\n#|\n##|$)/i.exec(text)
-        ?.[1]?.trim();
+    // Tolerant extraction: find the last "Prompt VEO" label and take the
+    // paragraph after it (works for both old combined and new split sheets).
+    const labelIdx = text.toLowerCase().lastIndexOf("prompt veo");
+    let scenePrompt: string | undefined;
+    if (labelIdx >= 0) {
+      const afterLabel = text.slice(text.indexOf("\n", labelIdx) + 1);
+      scenePrompt =
+        /^([\s\S]{20,900}?)(?=\n\s*-\s|\n#|\n##|\nprompt veo|$)/im.exec(
+          afterLabel
+        )?.[1]?.trim();
+    }
     if (!scenePrompt) {
       return { ok: false as const, error: "Gak nemu prompt VEO di dalam sheet." };
     }

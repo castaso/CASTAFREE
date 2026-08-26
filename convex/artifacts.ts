@@ -53,6 +53,7 @@ export const saveInternal = internalMutation({  args: {
       v.literal("ebook_pdf"),
       v.literal("landing_page"),
       v.literal("kie_veo_sheet"),
+      v.literal("setting_images"),
       v.literal("scalev_pack")
     ),
     name: v.string(),

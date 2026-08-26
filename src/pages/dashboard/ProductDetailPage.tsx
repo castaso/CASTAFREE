@@ -37,7 +37,8 @@ const ARTIFACT_GROUPS: { kinds: string[]; label: string }[] = [
   { kinds: ["image_ad_brief"], label: "Script & Image Ads" },
   { kinds: ["ebook_pdf"], label: "Ebook PDF" },
   { kinds: ["landing_page"], label: "Landing Page" },
-  { kinds: ["kie_veo_sheet"], label: "KIE & VEO" },
+  { kinds: ["kie_veo_sheet"], label: "Prompt VEO" },
+  { kinds: ["setting_images"], label: "Setting Images" },
   { kinds: ["scalev_pack"], label: "Scalev Pack" },
 ];
 
@@ -276,6 +277,10 @@ function AgentRunner({ product }: { product: Product }) {
   const [generateImages, setGenerateImages] = useState(false);
   const [referenceBook, setReferenceBook] = useState("");
   const [topicAngleOverride, setTopicAngleOverride] = useState("");
+  // Doc 11: Bayu options
+  const [scriptIndexChoice, setScriptIndexChoice] = useState<string>("all");
+  const [avatarStorageId, setAvatarStorageId] = useState<string>("");
+  const galleryItems = useQuery(api.gallery.list);
 
   // Live progress (doc 08 "output streaming"): while a run executes we
   // subscribe to its tasks; Convex reactivity pushes status changes.
@@ -344,6 +349,13 @@ function AgentRunner({ product }: { product: Product }) {
         generateImages,
         referenceBook: referenceBook.trim() || undefined,
         topicAngleOverride: topicAngleOverride.trim() || undefined,
+        scriptIndexes:
+          scriptIndexChoice === "all"
+            ? undefined
+            : [Number(scriptIndexChoice)],
+        avatarStorageId: avatarStorageId
+          ? (avatarStorageId as Id<"_storage">)
+          : undefined,
       });
       if (result.ok) {
         showToast(
@@ -443,6 +455,55 @@ function AgentRunner({ product }: { product: Product }) {
               </button>
             );
           })}
+
+          {/* ── Bayu options (doc 11) ──────────────────────── */}
+          {selected.includes("bayu") && (
+            <div className="col-span-full grid gap-3 rounded-lg border border-border-d bg-app p-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-2">
+                  Script index
+                </label>
+                <select
+                  value={scriptIndexChoice}
+                  onChange={(e) => setScriptIndexChoice(e.target.value)}
+                  disabled={running}
+                  className="h-10 w-full rounded-lg border border-border-d bg-surface px-3 text-sm font-semibold text-ink outline-none transition-colors hover:border-[#FAA61A]"
+                >
+                  <option value="all">All (1–5)</option>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={String(n)}>
+                      Script {n}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-2">
+                  Avatar{" "}
+                  <span className="font-normal normal-case text-ink-3">
+                    (dari Galeri — konsisten di semua visual)
+                  </span>
+                </label>
+                <select
+                  value={avatarStorageId}
+                  onChange={(e) => setAvatarStorageId(e.target.value)}
+                  disabled={running}
+                  className="h-10 w-full rounded-lg border border-border-d bg-surface px-3 text-sm font-semibold text-ink outline-none transition-colors hover:border-[#FAA61A]"
+                >
+                  <option value="">(tanpa avatar)</option>
+                  {(galleryItems ?? []).map((item: Doc<"gallery">) => (
+                    <option key={item._id} value={item._id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="col-span-full text-[11px] text-ink-3">
+                Generate setting image butuh KIE + Supabase key. Video aslinya
+                tetap kamu produksi di luar (VEO/Google Flow + VA voiceover).
+              </p>
+            </div>
+          )}
 
           {/* ── Dimas overrides (doc 09 step 2) ────────────── */}
           {selected.includes("dimas") && (
