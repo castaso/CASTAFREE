@@ -15,6 +15,7 @@ import { splitUgcScripts, splitBayuSheet } from "./lib/ugc";
 import {
   callText,
   estimateModelCost,
+  TEXT_ENGINES,
   type EngineCredential,
   type TextEngine,
 } from "./lib/llm";
@@ -300,14 +301,13 @@ function runAgentsHandler(
     }
 
     // ── Resolve engines & keys (BYOK with auto-fallback) ──
-    const runConfig = await ctx.runQuery(api.userSettings.resolveRunConfig);
     const keyRows: Doc<"providerKeys">[] = await ctx.runQuery(
       internal.providerKeys.getAllPlain,
       { userId }
     );
     const credentials: EngineCredential[] = keyRows
       .filter((row) =>
-        ["gemini", "groq", "openai", "anthropic"].includes(row.provider)
+        TEXT_ENGINES.includes(row.provider as TextEngine)
       )
       .map((row) => ({
         engine: row.provider as TextEngine,
@@ -432,6 +432,11 @@ function runAgentsHandler(
         }
       }
 
+      // Doc 13: per-agent engine/model override wins over the global default.
+      const agentConfig = await ctx.runQuery(api.userSettings.resolveForAgent, {
+        agentId: id,
+      });
+
       const taskId = await ctx.runMutation(internal.pipelineData.createTask, {
         runId,
         userId,
@@ -441,7 +446,7 @@ function runAgentsHandler(
         input: inputText,
         status: "running",
         createdAt: Date.now(),
-        model: runConfig.model || undefined,
+        model: agentConfig.model || undefined,
       });
 
       let systemPrompt = AGENT_PROMPTS[id] ?? "";
@@ -451,8 +456,8 @@ function runAgentsHandler(
 
       try {
         const call = await callText({
-          chosenEngine: runConfig.textEngine,
-          modelOverride: runConfig.model || undefined,
+          chosenEngine: agentConfig.textEngine,
+          modelOverride: agentConfig.model || undefined,
           credentials,
           hasEnvOpenAI,
           system: systemPrompt,

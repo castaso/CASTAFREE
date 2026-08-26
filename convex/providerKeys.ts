@@ -3,7 +3,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { action, internalQuery, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { maskKey } from "./lib/llm";
+import { KIMI_BASE_URL, maskKey } from "./lib/llm";
 import { sanitizeBucketName } from "./lib/supabaseStorage";
 import {
   KIE_BASE,
@@ -13,6 +13,7 @@ import {
 export const PROVIDERS = [
   "gemini",
   "groq",
+  "kimi",
   "openai",
   "anthropic",
   "kie",
@@ -26,6 +27,7 @@ export type Provider = (typeof PROVIDERS)[number];
 const providerValidator = v.union(
   v.literal("gemini"),
   v.literal("groq"),
+  v.literal("kimi"),
   v.literal("openai"),
   v.literal("anthropic"),
   v.literal("kie"),
@@ -197,6 +199,10 @@ export const testConnection = action({
           break;
         case "groq":
           await pingBearer(`${row.key}`, "https://api.groq.com/openai/v1/models");
+          ok = true;
+          break;
+        case "kimi":
+          await pingBearer(row.key, `${KIMI_BASE_URL}/models`);
           ok = true;
           break;
         case "openai":

@@ -164,6 +164,7 @@ export default defineSchema({
       v.union(
         v.literal("gemini"),
         v.literal("groq"),
+        v.literal("kimi"),
         v.literal("openai"),
         v.literal("anthropic")
       )
@@ -171,11 +172,25 @@ export default defineSchema({
     imageEngine: v.optional(v.literal("kie")),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
+  agentOverrides: defineTable({
+    userId: v.id("users"),
+    agentId: v.string(),
+    engine: v.union(
+      v.literal("gemini"),
+      v.literal("groq"),
+      v.literal("kimi"),
+      v.literal("openai"),
+      v.literal("anthropic")
+    ),
+    model: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_user_agent", ["userId", "agentId"]),
   providerKeys: defineTable({
     userId: v.id("users"),
     provider: v.union(
       v.literal("gemini"),
       v.literal("groq"),
+      v.literal("kimi"),
       v.literal("openai"),
       v.literal("anthropic"),
       v.literal("kie"),

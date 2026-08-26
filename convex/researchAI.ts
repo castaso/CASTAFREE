@@ -6,6 +6,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import {
   callText,
   estimateModelCost,
+  TEXT_ENGINES,
   type EngineCredential,
   type TextEngine,
 } from "./lib/llm";
@@ -151,13 +152,15 @@ export const runResearch = action({
     if (rawUserId === null) throw new ConvexError("Not authenticated");
     const userId: Id<"users"> = rawUserId;
 
-    const runConfig = await ctx.runQuery(api.userSettings.resolveRunConfig);
+    const runConfig = await ctx.runQuery(api.userSettings.resolveForAgent, {
+      agentId: "maya",
+    });
     const keyRows = await ctx.runQuery(internal.providerKeys.getAllPlain, {
       userId,
     });
     const credentials: EngineCredential[] = keyRows
       .filter((row) =>
-        ["gemini", "groq", "openai", "anthropic"].includes(row.provider)
+        TEXT_ENGINES.includes(row.provider as TextEngine)
       )
       .map((row) => ({
         engine: row.provider as TextEngine,
@@ -311,13 +314,15 @@ export const approveAndGenerate = action({
     }
 
     // 2. Generate PRODUCT_BRIEF.md + BVI.md via the text engine.
-    const runConfig = await ctx.runQuery(api.userSettings.resolveRunConfig);
+    const runConfig = await ctx.runQuery(api.userSettings.resolveForAgent, {
+      agentId: "maya",
+    });
     const keyRows = await ctx.runQuery(internal.providerKeys.getAllPlain, {
       userId,
     });
     const credentials: EngineCredential[] = keyRows
       .filter((row) =>
-        ["gemini", "groq", "openai", "anthropic"].includes(row.provider)
+        TEXT_ENGINES.includes(row.provider as TextEngine)
       )
       .map((row) => ({
         engine: row.provider as TextEngine,

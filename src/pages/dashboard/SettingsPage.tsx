@@ -24,10 +24,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useToast } from "@/components/toast";
 import { cn } from "@/lib/utils";
+import { AGENTS } from "@/data/team";
 
-// ── Static provider metadata (doc 04) ───────────────────────────────────────
+// ── Static provider metadata (doc 04/13) ────────────────────────────────────
 
-type TextEngineId = "gemini" | "groq" | "openai" | "anthropic";
+import {
+  ENGINE_MODEL_OPTIONS,
+  TEXT_ENGINES,
+} from "../../../convex/lib/llm";
+
+type TextEngineId = (typeof TEXT_ENGINES)[number];
 
 const ENGINES: {
   id: TextEngineId;
@@ -45,7 +51,13 @@ const ENGINES: {
     id: "groq",
     name: "Groq",
     badge: "GRATIS",
-    note: "Cadangan cepat (Llama/GPT-OSS) ±1.000 req/hari. Key: console.groq.com/keys",
+    note: "Cadangan cepat (GPT-OSS) ±1.000 req/hari. Key: console.groq.com/keys",
+  },
+  {
+    id: "kimi",
+    name: "Kimi (Moonshot)",
+    badge: "OPSIONAL",
+    note: "Opsi hemat, OpenAI-compatible. Key dari platform Moonshot (kimi.com).",
   },
   {
     id: "openai",
@@ -56,8 +68,8 @@ const ENGINES: {
   {
     id: "anthropic",
     name: "Anthropic (Claude)",
-    badge: "OPSIONAL",
-    note: "Buat kualitas copy paling tajam. Berbayar tipis per pemakaian.",
+    badge: "PREMIUM",
+    note: "Kualitas copy bahasa Indonesia terbaik — Sonnet seimbang, Haiku hemat buat tugas ringan.",
   },
 ];
 
@@ -90,11 +102,8 @@ const OPTIONAL_PROVIDERS: {
   },
 ];
 
-const OPENAI_MODELS = [
-  { id: "gpt-4o-mini", label: "GPT-4o mini — cepat & hemat" },
-  { id: "gpt-4.1-mini", label: "GPT-4.1 mini — lebih pinter" },
-  { id: "gpt-4o", label: "GPT-4o — paling pintar, paling mahal" },
-];
+const MODEL_OPTIONS: Record<string, { id: string; label: string }[]> =
+  ENGINE_MODEL_OPTIONS;
 
 type ProviderStatus = {
   provider: string;
@@ -112,6 +121,8 @@ export function SettingsPage() {
   const statuses = useQuery(api.providerKeys.listStatuses);
   const setModel = useMutation(api.userSettings.setModel);
   const setTextEngine = useMutation(api.userSettings.setTextEngine);
+  const overrides = useQuery(api.userSettings.listAgentOverrides);
+  const setAgentOverride = useMutation(api.userSettings.setAgentOverride);
   const saveKey = useMutation(api.providerKeys.saveKey);
   const deleteKey = useMutation(api.providerKeys.deleteKey);
   const testConnection = useAction(api.providerKeys.testConnection);
@@ -186,10 +197,39 @@ export function SettingsPage() {
     }
   }
 
+  const [savingOverride, setSavingOverride] = useState<string | null>(null);
+  async function onSetAgentOverride(
+    agentId: string,
+    engine: TextEngineId | null,
+    model: string | null
+  ) {
+    setSavingOverride(agentId);
+    try {
+      await setAgentOverride({
+        agentId,
+        engine,
+        model: model ?? undefined,
+      });
+      showToast(
+        engine
+          ? `Override ${agentId} disimpan (${engine}).`
+          : `Override ${agentId} dihapus — ikuti default.`,
+        "success"
+      );
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Gagal simpan override.",
+        "error"
+      );
+    } finally {
+      setSavingOverride(null);
+    }
+  }
+
   async function onPickModel(model: string) {
     try {
       await setModel({ model });
-      showToast(`Model OpenAI diganti ke ${model}.`, "success");
+      showToast(`Model diganti ke ${model}.`, "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Gagal ganti model.", "error");
     }
@@ -197,6 +237,7 @@ export function SettingsPage() {
 
   const license = licenses?.[0];
   const currentEngine = settings?.textEngine ?? "gemini";
+  const activeEngineId: TextEngineId = currentEngine;
 
   const checkTurso = useAction(api.turso.health);
   const [turso, setTurso] = useState<
@@ -368,17 +409,23 @@ export function SettingsPage() {
                   </div>
                   <KeyErrorNote status={status} />
 
-                  {engine.id === "openai" && active && (
+                  {engine.id === activeEngineId && (
                     <div className="mt-3 border-t border-border-d pt-3">
                       <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-2">
-                        Model OpenAI
+                        Model {engine.name}
                       </label>
                       <select
-                        value={settings?.model ?? "gpt-4o-mini"}
+                        value={
+                          MODEL_OPTIONS[engine.id]?.some(
+                            (o) => o.id === settings?.model
+                          )
+                            ? (settings?.model as string)
+                            : ENGINE_MODEL_OPTIONS[engine.id][0].id
+                        }
                         onChange={(e) => void onPickModel(e.target.value)}
                         className="h-10 w-full rounded-lg border border-border-d bg-app px-3 text-sm font-semibold text-ink outline-none transition-colors hover:border-[#FAA61A]"
                       >
-                        {OPENAI_MODELS.map((m) => (
+                        {(MODEL_OPTIONS[engine.id] ?? []).map((m) => (
                           <option key={m.id} value={m.id}>
                             {m.label}
                           </option>
@@ -386,13 +433,103 @@ export function SettingsPage() {
                       </select>
                     </div>
                   )}
-                </div>
+                 </div>
               );
             })}
             <p className="rounded-lg bg-info-bg p-3 text-xs text-info">
               💡 Mulai GRATIS: cukup Gemini (+ Groq cadangan). Biaya wajib = Rp
               0. Naik ke berbayar cuma kalau mau auto-generate gambar/video
               (KIE) atau copy kualitas premium.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* ── Override per agent (doc 13 step 3) ──────────── */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[#FAA61A]" />
+              Override Per Agent
+            </CardTitle>
+            <CardDescription>
+              Kasih agent tertentu engine/model sendiri — mis. Reza pakai
+              Claude Sonnet buat copy paling tajam, sisanya ikut default
+              gratis.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {AGENTS.map((agent) => {
+              const override = overrides?.find(
+                (o) => o.agentId === agent.id
+              );
+              const rowEngine: TextEngineId | "" = override?.engine ?? "";
+              return (
+                <div
+                  key={agent.id}
+                  className="flex flex-wrap items-center gap-2 rounded-lg border border-border-d bg-app p-3"
+                >
+                  <span
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                    style={{ backgroundColor: agent.color }}
+                  >
+                    {agent.name.charAt(0)}
+                  </span>
+                  <span className="w-28 shrink-0 text-sm font-bold" style={{ color: agent.color }}>
+                    {agent.name}
+                  </span>
+
+                  <select
+                    value={rowEngine}
+                    onChange={(e) =>
+                      void onSetAgentOverride(
+                        agent.id,
+                        (e.target.value || null) as TextEngineId | null,
+                        null
+                      )
+                    }
+                    disabled={savingOverride === agent.id}
+                    className="h-9 rounded-lg border border-border-d bg-surface px-2 text-sm font-semibold text-ink outline-none transition-colors hover:border-[#FAA61A]"
+                  >
+                    <option value="">Ikuti default</option>
+                    {ENGINES.map((engine) => (
+                      <option key={engine.id} value={engine.id}>
+                        {engine.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {rowEngine !== "" && (
+                    <select
+                      value={
+                        MODEL_OPTIONS[rowEngine]?.some(
+                          (o) => o.id === override?.model
+                        )
+                          ? (override?.model as string)
+                          : ENGINE_MODEL_OPTIONS[rowEngine][0].id
+                      }
+                      onChange={(e) =>
+                        void onSetAgentOverride(
+                          agent.id,
+                          rowEngine,
+                          e.target.value
+                        )
+                      }
+                      disabled={savingOverride === agent.id}
+                      className="h-9 min-w-0 flex-1 rounded-lg border border-border-d bg-surface px-2 text-sm text-ink outline-none transition-colors hover:border-[#FAA61A]"
+                    >
+                      {(MODEL_OPTIONS[rowEngine] ?? []).map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              );
+            })}
+            <p className="text-[11px] text-ink-3">
+              Kalau engine yang di-override gak punya key valid, sistem
+              otomatis fallback ke engine lain.
             </p>
           </CardContent>
         </Card>

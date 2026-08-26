@@ -7,6 +7,7 @@ import { api, internal } from "./_generated/api";
 import {
   callText,
   estimateModelCost,
+  TEXT_ENGINES,
   type EngineCredential,
   type TextEngine,
 } from "./lib/llm";
@@ -79,7 +80,7 @@ export const askMentor = action({
     });
     const credentials: EngineCredential[] = keyRows
       .filter((row) =>
-        ["gemini", "groq", "openai", "anthropic"].includes(row.provider)
+        TEXT_ENGINES.includes(row.provider as TextEngine)
       )
       .map((row) => ({
         engine: row.provider as TextEngine,

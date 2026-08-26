@@ -76,6 +76,19 @@ test("default models are rotation-proof", () => {
   expect(ENGINE_DEFAULT_MODELS.groq).toBe("openai/gpt-oss-120b");
   // Hot-swap alias keeps Gemini on the latest stable Flash.
   expect(ENGINE_DEFAULT_MODELS.gemini).toBe("gemini-flash-latest");
+  // Doc 13: Kimi is the 5th (optional, cheap) engine.
+  expect(ENGINE_DEFAULT_MODELS.kimi).toBe("kimi-k2-0905-preview");
+});
+
+test("kimi slots into the fallback chain between groq and openai", () => {
+  const all = creds("gemini", "groq", "kimi", "openai");
+  const chain = buildEngineChain("groq", all, false);
+  expect(chain.map((c) => c.engine)).toEqual([
+    "groq",
+    "gemini",
+    "kimi",
+    "openai",
+  ]);
 });
 
 // ── KIE media helpers ───────────────────────────────────────────────────────

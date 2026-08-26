@@ -6,15 +6,55 @@
 // Groq share the OpenAI SDK (Groq via baseURL), Gemini and Anthropic are
 // plain fetch calls.
 
-export type TextEngine = "gemini" | "groq" | "openai" | "anthropic";
+export type TextEngine = "gemini" | "groq" | "kimi" | "openai" | "anthropic";
+
+/** Canonical engine order — cheap/free engines first, paid premium last. */
+export const TEXT_ENGINES: TextEngine[] = [
+  "gemini",
+  "groq",
+  "kimi",
+  "openai",
+  "anthropic",
+];
+
+export const KIMI_BASE_URL = "https://api.moonshot.ai/v1";
 
 export const ENGINE_DEFAULT_MODELS: Record<TextEngine, string> = {
   // Google's hot-swap alias: always points at the latest stable Flash.
   gemini: "gemini-flash-latest",
   // Groq retired all llama-3.x chat models on 2026-08-16.
   groq: "openai/gpt-oss-120b",
+  kimi: "kimi-k2-0905-preview",
   openai: "gpt-4o-mini",
   anthropic: "claude-haiku-4-5",
+};
+
+/** Curated model choices per engine (Settings pickers + override matrix). */
+export const ENGINE_MODEL_OPTIONS: Record<
+  TextEngine,
+  { id: string; label: string }[]
+> = {
+  gemini: [
+    { id: "gemini-flash-latest", label: "Flash (latest) — default hemat" },
+    { id: "gemini-flash-lite-latest", label: "Flash-Lite — paling murah" },
+  ],
+  groq: [
+    { id: "openai/gpt-oss-120b", label: "GPT-OSS 120B — default" },
+    { id: "openai/gpt-oss-20b", label: "GPT-OSS 20B — lebih cepat" },
+  ],
+  kimi: [
+    { id: "kimi-k2-0905-preview", label: "Kimi K2 — default" },
+    { id: "kimi-k2-turbo-preview", label: "Kimi K2 Turbo — lebih cepat" },
+  ],
+  openai: [
+    { id: "gpt-4o-mini", label: "GPT-4o mini — cepat & hemat" },
+    { id: "gpt-4.1-mini", label: "GPT-4.1 mini — lebih pinter" },
+    { id: "gpt-4o", label: "GPT-4o — paling pintar" },
+  ],
+  anthropic: [
+    { id: "claude-haiku-4-5", label: "Haiku 4.5 — hemat, tugas ringan" },
+    { id: "claude-sonnet-4-5", label: "Sonnet 4.5 — copy paling tajam" },
+  ],
 };
 
 const PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
@@ -23,6 +63,10 @@ const PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
   "gpt-4o": { inputPer1M: 2.5, outputPer1M: 10 },
   "gemini-flash-latest": { inputPer1M: 0, outputPer1M: 0 }, // free tier first
   "openai/gpt-oss-120b": { inputPer1M: 0.15, outputPer1M: 0.6 },
+  "openai/gpt-oss-20b": { inputPer1M: 0.075, outputPer1M: 0.3 },
+  // Approximate Moonshot list pricing; verify at kimi.com when needed.
+  "kimi-k2-0905-preview": { inputPer1M: 0.6, outputPer1M: 2.5 },
+  "kimi-k2-turbo-preview": { inputPer1M: 1.15, outputPer1M: 8 },
   "claude-haiku-4-5": { inputPer1M: 1, outputPer1M: 5 },
 };
 
@@ -83,7 +127,7 @@ export function buildEngineChain(
   };
 
   push(chosen);
-  for (const engine of ["gemini", "groq", "openai", "anthropic"] as const) {
+  for (const engine of TEXT_ENGINES) {
     if (engine !== chosen) push(engine);
   }
   if (
@@ -245,6 +289,17 @@ async function dispatch(
     case "groq":
       return callOpenAICompatible(
         "https://api.groq.com/openai/v1",
+        apiKey,
+        entry.model,
+        system,
+        user,
+        temperature
+      );
+    case "kimi":
+      // ASSUMPTION: Moonshot international OpenAI-compatible endpoint;
+      // verified via GET /models by the providerKeys test connection.
+      return callOpenAICompatible(
+        KIMI_BASE_URL,
         apiKey,
         entry.model,
         system,
